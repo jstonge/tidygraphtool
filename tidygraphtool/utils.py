@@ -5,7 +5,6 @@ import functools
 import os
 import re
 import sys
-from tidygraphtool.tidygraphtool import extract_nodes
 import warnings
 from collections import namedtuple
 from collections.abc import Callable as dispatch_callable
