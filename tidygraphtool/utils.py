@@ -2,9 +2,8 @@
 
 import fnmatch
 import functools
-import os
+import os, sys
 import re
-import sys
 import warnings
 from collections import namedtuple
 from collections.abc import Callable as dispatch_callable
@@ -15,17 +14,13 @@ from typing import (
     Iterable,
     List,
     Optional,
-    Pattern,
     Tuple,
     Union,
 )
 
+import graph_tool.all as gt
 import numpy as np
 import pandas as pd
-from pandas.api.types import CategoricalDtype, is_list_like
-from pandas.core import common
-
-
 
 
 def check(varname: str, value, expected_types: list):
@@ -86,14 +81,52 @@ def check_column(
 
 
 def assert_nodes_edges_equal(edges, nodes2):
-    nodes1 = extract_nodes(edges)
+  nodes1 = extract_nodes(edges)
 
-    nlist1 = list(nodes1)
-    nlist2 = list(nodes2)
-    try:
-        d1 = dict(nlist1)
-        d2 = dict(nlist2)
-    except (ValueError, TypeError):
-        d1 = dict.fromkeys(nlist1)
-        d2 = dict.fromkeys(nlist2)
-    assert d1 == d2
+  nlist1 = list(nodes1)
+  nlist2 = list(nodes2)
+  try:
+      d1 = dict(nlist1)
+      d2 = dict(nlist2)
+  except (ValueError, TypeError):
+      d1 = dict.fromkeys(nlist1)
+      d2 = dict.fromkeys(nlist2)
+  assert d1 == d2
+
+
+def assert_gt_edgelist_equal(G: gt.Graph, edges2: pd.DataFrame):
+  edges1 = edges2dataframe(G).loc[:, ["source", "target"]]\
+                             .assign(source = lambda x: x.source.map(int),
+                                     target = lambda x: x.target.map(int))\
+                             .sort_values(["source", "target"])\
+                             .reset_index(drop=True)
+
+  edges2 = make_index(edges2).loc[:, ["source", "target"]]\
+                             .assign(source = lambda x: x.source.map(int),
+                                     target = lambda x: x.target.map(int))\
+                             .sort_values(["source", "target"])\
+                             .reset_index(drop=True)
+
+  if edges1.equals(edges2) == False:
+    raise ValueError("Not the same")
+
+
+def guess_df_type(x:pd.DataFrame) -> str:
+    x = pd.DataFrame(x)
+    colnames = x.columns.str.lower()
+    if any(colnames.isin(["id", "name"])):
+        return "NodeDataFrame"
+    elif any(colnames.isin(["source", "target", "from", "to", "weight"])):
+        return "EdgeDataFrame"
+    else:
+        raise ValueError("Unable to guess dataframe type")
+
+
+def guess_list_type(x:list) -> str:
+    if len(x) == 2:
+        x1, x2 = [guess_df_type(_) for _ in x]
+        if set([x1, x2]) == set(['NodeDataFrame', 'EdgeDataFrame']):
+            return 'node_edge'
+        else:
+            raise ValueError("Unknowen list format")
+

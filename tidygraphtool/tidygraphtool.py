@@ -25,20 +25,34 @@ import graph_tool.all as gt
 import pandas as pd
 import networkx as nx
 
+from .edgedataframe import *
+from .nodedataframe import *
+
 from .utils import (
     check,
     check_column,
-    assert_nodes_edges_equal
+    assert_nodes_edges_equal,
+    guess_df_type, 
+    guess_list_type
 )
 
+
+# ------------------------------------------------------------------------------
+# gt_graph
+# ------------------------------------------------------------------------------
+
+
 def _augment_prop_nodes(G: gt.Graph, 
-                       nodes: pd.DataFrame, 
-                       prop_name: Optional[str] = None) -> pd.DataFrame:
+                        nodes: Union[NodeDataFrame, NodeSeries], 
+                        prop_name: Optional[str] = None) -> pd.DataFrame:
+    
+    nodes=NodeDataFrame(nodes)
     
     if prop_name is None:
         prop_name = nodes.columns[0]
     
     check_column(nodes, column_names = [prop_name], present=True)
+
     if nodes[f'{prop_name}'].isnull().values.any() == True:
         raise ValueError("There are NAs in the col")
     
@@ -61,11 +75,15 @@ def _augment_prop_nodes(G: gt.Graph,
         raise ValueError("Nodes in G has not the same length than nodes data frame.")
 
 
-def _augment_prop_edges(G: gt.Graph, edges: pd.DataFrame, prop_name: str) -> pd.DataFrame:
-    check_column(edges, column_names = [prop_name])
-       
+def _augment_prop_edges(G: gt.Graph, 
+                        edges: Union[EdgeDataFrame, EdgeSeries], 
+                        prop_name: str) -> pd.DataFrame:
+    
+    edges = EdgeDataFrame(edges)
+
     if edges[f'{prop_name}'].isnull().values.any() == True:
         raise ValueError("There are NAs in the col")
+    check_column(edges, column_names = [prop_name])
 
     prop_type = str(edges[f"{prop_name}"].dtype)
     if prop_type == "object":
@@ -91,28 +109,31 @@ def _augment_prop_edges(G: gt.Graph, edges: pd.DataFrame, prop_name: str) -> pd.
 
 def augment_prop(
     G: gt.Graph,
-    nodes: pd.DataFrame = None,
-    edges: pd.DataFrame = None,
+    x: pd.DataFrame,
     prop_name: Optional[str] = None
 ) -> gt.Graph:
     """
     Augment nodes in Graph with additional nodes metadata.
     
     :param G: A `gt.Graph` object.
-    :param nodes: A `data Frame` containing information about the nodes in the G. 
+    :param x: A `data Frame` containing information about the nodes in the G. 
     :param prop_name: String that matches the colname. 
-    :param prop_type: Column encoded as `n`  
     :return: A `Graph_tool` object
     """
-    if nodes is not None and edges is None:
-        _augment_prop_nodes(G, nodes=nodes, prop_name=prop_name)
-    elif nodes is None and edges is not None:
-        _augment_prop_edges(G, edges=edges, prop_name=prop_name)
+    G = G.copy()
+
+    if guess_df_type(x) is 'NodeDataFrame': x=NodeDataFrame(x)
+    if guess_df_type(x) is 'EdgeDataFrame': x=EdgeDataFrame(x)
+
+    if isinstance(x, (NodeDataFrame, NodeSeries)):
+        return _augment_prop_nodes(G, x, prop_name)
+    else:
+        return _augment_prop_edges(G, x, prop_name)
 
 
 def gt_graph(
-    edges: pd.DataFrame, 
     nodes: Optional[pd.DataFrame] = None, 
+    edges: Optional[pd.DataFrame] = None, 
     directed: bool = True,
     node_key: str = "name"
 ) -> gt.Graph:
@@ -143,53 +164,49 @@ def as_gt_graph(x, directed=True, node_key='name'):
     return x
 
 
-@as_gt_graph.register(nx.classes.graph.Graph)
-def _networkx_graph(x, directed=True):
-    """Convert networkx graph, and returns a graph-tool graph."""
-    edges = networkx_to_df(x)
-    g = gt.Graph(directed=directed)
-    g.add_edge_list(edges[["source","target"]].to_numpy())
-    return g
-
-
 @as_gt_graph.register(pd.DataFrame)
-def _data_frame(x, directed=True):
+@as_gt_graph.register(EdgeDataFrame)
+def _data_frame(x: Union[pd.DataFrame, EdgeDataFrame], directed: bool=True) -> gt.Graph:
     """Convert networkx graph, and returns a graph-tool graph."""
-    edges = as_graph_edge_df(x)
-    g = gt.Graph(directed=directed)
-    g.add_edge_list(edges[["source","target"]].to_numpy())
-    # [augment_prop(g, edges=edges, prop_name=_) for _ in edges.iloc[:, 2:-1].columns]
-    return g
+    if guess_df_type(x) == 'EdgeDataFrame':
+        edges = as_graph_edge_df(x)
+        g = gt.Graph(directed=directed)
+        g.add_edge_list(edges[["source","target"]].to_numpy())
+        # [augment_prop(g, edges=edges, prop_name=_) for _ in edges.iloc[:, 2:-1].columns]
+        return g
+    else:
+        raise ValueError("as_gt_graph for nodes not implemented yet")
 
 
 @as_gt_graph.register(list)
 def _list(x, directed=True, node_key='name'):
     """Convert list containing nodes and edges, and returns a graph-tool graph."""
-    nodes, edges = as_graph_node_edge(x, node_key=node_key)
-    g = gt.Graph(directed=directed)
-    g.add_edge_list(edges[["source","target"]].to_numpy())
-    augment_prop(g, nodes=nodes, prop_name="name")
-    # [augment_prop(g, edges=edges, prop_name=_) for _ in edges.iloc[:, 2:-1].columns]
-    # [augment_prop(g, nodes=nodes, prop_name=_) for _ in nodes.columns]
-    return g
+    if guess_list_type(x) == 'node_edge':
+        nodes, edges = as_graph_node_edge(x, node_key=node_key)
+        g = gt.Graph(directed=directed)
+        g.add_edge_list(edges[["source","target"]].to_numpy())
 
-
-def networkx_to_df(G):
-    # !TODO: check if nx is installed
-    edges = nx.to_pandas_edgelist(G)
-    check_column(edges, column_names=["source", "target"], present=True)
-    return  make_index(edges)
+        g = augment_prop(g, NodeDataFrame(nodes), prop_name="name")
+        
+        # [augment_prop(g, edges=edges, prop_name=_) for _ in edges.iloc[:, 2:-1].columns]
+        # [augment_prop(g, nodes=nodes, prop_name=_) for _ in nodes.columns]
+        return g
 
 
 def as_graph_edge_df(x):
     check_column(x, column_names=["source", "target"], present=True)
-    return make_index(x)
-      
+    return _make_index(x)
+
 
 def as_graph_node_edge(x, node_key='name'):
     """Prep and check that list of nodes and edges is a proper graph_node_edge format"""
-    edges = x[0]
-    nodes = x[1]
+    x0, x1 = [guess_df_type(_) for _ in x]
+    if x0 == 'NodeDataFrame':
+        nodes = x[0]
+        edges = x[1]
+    else:
+        nodes = x[1]
+        edges = x[0]
     
     #!TODO: add option to pass node_key
     # if node_key != 'name':
@@ -200,40 +217,17 @@ def as_graph_node_edge(x, node_key='name'):
         nodes = nodes.rename(columns={nodes.columns[0]: "name"}, inplace=True)
 
     check_column(edges, column_names=["source", "target"], present=True)
-    edges = make_index(edges, nodes)
+    edges = _make_index(edges, nodes)
     return nodes, edges
 
 
-def edges2dataframe(G: gt.Graph) -> pd.DataFrame:
-    """Takes a Graph-tool graph object and returns edges data frame"""
-    tmp_df = pd.DataFrame(list(G.edges()), columns=["source", "target"])
-    tmp_df["source"] = tmp_df.source.astype(str)
-    tmp_df["target"] = tmp_df.target.astype(str)
-    return tmp_df
-
-
-def nodes2dataframe(G: gt.Graph) -> pd.DataFrame:
-    """Takes a Graph-tool graph object and returns nodes data frame"""
-    prop_dfs = []
-    for prop in G.vp:
-        prop_dfs.append(pd.DataFrame({f"{prop}": list(G.vp[f"{prop}"])}))
-    prop_dfs = pd.concat(prop_dfs, axis=1)
-    
-    if 'name' in prop_dfs.columns:
-        prop_dfs = prop_dfs.rename(columns={"name":"label"})
-    
-    prop_dfs["name"] = prop_dfs.index
-    prop_dfs["name"] = prop_dfs["name"].astype(str)
-    
-    return prop_dfs
-
-
-def extract_nodes(edges: pd.DataFrame) -> pd.DataFrame:
+def _extract_nodes(edges: pd.DataFrame) -> pd.DataFrame:
     # we loose order here
     all_users = set(edges.source).union(set(edges.target))  
     return pd.DataFrame(all_users).rename(columns={0:"name"})
 
-def make_index(
+
+def _make_index(
     edges: pd.DataFrame,
     nodes: Optional[pd.DataFrame] = None, 
 ) -> pd.DataFrame:
@@ -246,7 +240,7 @@ def make_index(
     :return: edge dataframe 
     """
     if nodes is None:
-        nodes = extract_nodes(edges) # !TODO:does not keep order. Does that matter?
+        nodes = _extract_nodes(edges) # !TODO:does not keep order. Does that matter?
     elif "name" not in nodes.columns:
         nodes = nodes.rename(columns={nodes.columns[0]: "name"}, inplace=True)
 
@@ -265,9 +259,78 @@ def make_index(
 def print_gt(G):
     print(nodes2dataframe(G))
     print(edges2dataframe(G))
-    
 
-# Centrality
+
+# ------------------------------------------------------------------------------
+# networkx
+# ------------------------------------------------------------------------------
+
+
+@as_gt_graph.register(nx.classes.graph.Graph)
+def _networkx_graph(x, directed=True):
+    """Convert networkx graph, and returns a graph-tool graph."""
+    edges = networkx_to_df(x)
+    g = gt.Graph(directed=directed)
+    g.add_edge_list(edges[["source","target"]].to_numpy())
+    return g
+
+
+def networkx_to_df(G):
+    # !TODO: check if nx is installed
+    edges = nx.to_pandas_edgelist(G)
+    check_column(edges, column_names=["source", "target"], present=True)
+    return  _make_index(edges)
+
+
+def as_networkx(G: gt.Graph, 
+                directed: bool = False, 
+                prop_name: Optional[str] = None) -> Union[nx.Graph, nx.DiGraph]:
+    edges = edges2dataframe(G)
+    nodes = nodes2dataframe(G)
+    new_g = nx.from_pandas_edgelist(edges)
+    if directed is True:
+        new_g = new_g.to_directed()
+
+    attr = [(i, dict(group=gr)) for i,gr in enumerate(nodes[f"{prop_name}"])]
+    new_g.add_nodes_from(attr)
+    return new_g
+
+
+# ------------------------------------------------------------------------------
+# as_dataframe
+# ------------------------------------------------------------------------------
+
+def edges2dataframe(G: gt.Graph) -> pd.DataFrame:
+    """Takes a Graph-tool graph object and returns edges data frame"""
+    tmp_df = pd.DataFrame(list(G.edges()), columns=["source", "target"])
+    tmp_df["source"] = tmp_df.source.astype(str)
+    tmp_df["target"] = tmp_df.target.astype(str)
+    return tmp_df
+
+
+def nodes2dataframe(G: gt.Graph) -> pd.DataFrame:
+    """Takes a Graph-tool graph object and returns nodes data frame"""
+    if len(G.vp) != 0:
+        prop_dfs = []
+        for prop in G.vp:
+            prop_dfs.append(pd.DataFrame({f"{prop}": list(G.vp[f"{prop}"])}))
+        prop_dfs = pd.concat(prop_dfs, axis=1)
+    
+        if 'name' in prop_dfs.columns:
+            prop_dfs = prop_dfs.rename(columns={"name":"label"})
+    
+        prop_dfs["name"] = prop_dfs.index
+        prop_dfs["name"] = prop_dfs["name"].astype(str)
+    
+        return prop_dfs
+    
+    else:
+        return pd.DataFrame({"name":list(G.vertices())})  
+
+
+# ------------------------------------------------------------------------------
+# CENTRALITY
+# ------------------------------------------------------------------------------
 
 def centrality_degree(G: gt.Graph, 
                       weights=None,
@@ -275,38 +338,61 @@ def centrality_degree(G: gt.Graph,
                       loops=True, 
                       normalized=False) -> pd.Series:
     # expect nodes -> should we care?
-    return pd.DataFrame({"deg": list(G.degree_property_map(f"{mode}"))})["deg"]
+    return NodeDataFrame({"deg": list(G.degree_property_map(f"{mode}"))})["deg"]
 
-def node_coreness(G: gt.Graph) -> pd.Series:
+
+def centrality_pagerank(G: gt.Graph) -> pd.Series:
     # expect nodes -> should we care?
-    return pd.DataFrame({"kcore": list(gt.kcore_decomposition(G))})["kcore"]
-    
-# verbs
+    return NodeDataFrame({"pr": list(gt.pagerank(G))})["pr"]
 
-def filter_nodes(G: gt.Graph, criteria: str):
-    """The goal here is to filter tidystyle."""
+
+# ------------------------------------------------------------------------------
+# NODE
+# ------------------------------------------------------------------------------
+
+
+def node_coreness(G: gt.Graph) -> NodeSeries: 
+    # expect nodes -> should we care? 
+    return NodeDataFrame({"nc": list(gt.kcore_decomposition(G))})["nc"]
+
+
+# ------------------------------------------------------------------------------
+# VERBS
+# ------------------------------------------------------------------------------
+
+
+def filter_nodes(G: gt.Graph, criteria: str) -> gt.Graph:
+    """Filter tidystyle on a particular criteria.
+
+    Name and method is heavily inspired from pyjanitor.
+    """
     nodes = nodes2dataframe(G)
+    #!TODO: check_column(nodes, ...)
     df_tmp = nodes.query(criteria)
     nodes["bp"] = np.where(nodes["name"].isin(df_tmp["name"]), True, False)
-    augment_prop(G, nodes=nodes, prop_name="bp")
+    G = augment_prop(G, nodes, prop_name="bp")
     G = gt.GraphView(G, vfilt=G.vp.bp)
     G = gt.Graph(G, prune=True)
     del G.properties[("v", "bp")]
     return G
 
-def mutate():
-    pass
 
-def mutate_nodes(
+def mutate(
     G: gt.Graph,
     column_name: str,
     func: Callable[[gt.Graph], pd.Series]) -> gt.Graph:
     """
-    Similar to dplyr::mutate, this function creates a new
-    column here based on a function.
+    Creates a new column here based on a function.
     """
-    return augment_prop(G, nodes=pd.DataFrame({f"{column_name}": func}))
-    
+    G = G.copy()
+    x = func.rename(f"{column_name}")
+
+    if isinstance(x, (NodeDataFrame, NodeSeries)):
+        return _augment_prop_nodes(G, nodes=x, prop_name=column_name)
+    else:
+        return _augment_prop_edges(G, edges=x, prop_name=column_name)
+
+
 def left_join_nested_blocks(nodes, *args):
     """Take list levels from `NestedBlock` object, and left join them recursively"""
     argCount = len(args)
@@ -346,6 +432,13 @@ def left_join_nested_blocks(nodes, *args):
         print("No name in nodes dataframe")
 
     return tmp
+
+
+# def unnest_model(state):
+#   levels = state.get_levels()
+#   list_r_level = [list(r for r in levels[i].get_blocks()) for i in range(len(levels))]
+#   list_dfs = [pd.DataFrame(_) for _ in list_r_level]
+#   com_all_lvl = list_dfs[0].merge(list_dfs[1], left_on="level_0", right_on="level_1")
 
 
 def _merge_level_below(df_lvl_below, dat):
