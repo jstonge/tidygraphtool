@@ -1,6 +1,6 @@
-
 import pandas as pd
-import graph_tool.all as gt
+import graph_tool.all as gt 
+
 
 def as_data_frame(G: gt.Graph) -> pd.DataFrame:
     if G.active == 'nodes':

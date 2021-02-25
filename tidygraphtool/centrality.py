@@ -1,5 +1,6 @@
-from .nodedataframe import NodeDataFrame, NodeSeries
+from .nodedataframe import NodeDataFrame
 from .context import expect_nodes, expect_edges
+
 import pandas as pd
 import graph_tool.all as gt 
 

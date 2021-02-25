@@ -3,6 +3,7 @@ from .augment import *
 from .centrality import *
 from .context import *
 from .edgedataframe import *
+from .graph_measures import *
 from .group import *
 from .gt_graph import *
 from .networkx import *
