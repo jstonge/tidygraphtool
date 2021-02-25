@@ -1,21 +1,8 @@
 """Miscellaneous internal tidygraphtool helper functions."""
 
-import fnmatch
-import functools
-import os, sys
-import re
-import warnings
-from collections import namedtuple
-from collections.abc import Callable as dispatch_callable
-from itertools import chain, product
 from typing import (
-    Callable,
-    Dict,
     Iterable,
-    List,
-    Optional,
-    Tuple,
-    Union,
+    Union
 )
 
 import graph_tool.all as gt
@@ -81,7 +68,7 @@ def check_column(
 
 
 def assert_nodes_edges_equal(edges, nodes2):
-  nodes1 = extract_nodes(edges)
+  nodes1 = _extract_nodes(edges)
 
   nlist1 = list(nodes1)
   nlist2 = list(nodes2)
@@ -101,7 +88,7 @@ def assert_gt_edgelist_equal(G: gt.Graph, edges2: pd.DataFrame):
                              .sort_values(["source", "target"])\
                              .reset_index(drop=True)
 
-  edges2 = make_index(edges2).loc[:, ["source", "target"]]\
+  edges2 = _make_index(edges2).loc[:, ["source", "target"]]\
                              .assign(source = lambda x: x.source.map(int),
                                      target = lambda x: x.target.map(int))\
                              .sort_values(["source", "target"])\
