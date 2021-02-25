@@ -14,14 +14,15 @@ A tidy API for network manipulation with Graph-tool inspired by tidygraph.
 
 ## Setting up conda environment
 
+Graph-tool is best installed in a fresh environment. 
+
 `
 conda create --name graph_tool_env python=3.6 &&
 conda activate graph_tool_env &&
 conda install -c conda-forge graph-tool &&
 conda install -c conda-forge ipython jupyter pandas &&
-pip install cython networkx fa2 matplotlib ipykernel &&
-python -m ipykernel install --user --name=graph_tool_env # optional: to work within jupyter notebook
-`
+pip install networkx matplotlib ipykernel &&
+python -m ipykernel install --user --name=graph_tool_env
 
 ## INSPIRATION
  - `graph_tool`: tidygraph is thin wrapper of graph_tool (https://graph-tool.skewed.de/).
