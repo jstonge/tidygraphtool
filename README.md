@@ -23,6 +23,7 @@ conda install -c conda-forge graph-tool &&
 conda install -c conda-forge ipython jupyter pandas &&
 pip install networkx matplotlib ipykernel &&
 python -m ipykernel install --user --name=graph_tool_env
+`
 
 ## INSPIRATION
  - `graph_tool`: tidygraph is thin wrapper of graph_tool (https://graph-tool.skewed.de/).
