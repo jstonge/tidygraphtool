@@ -12,14 +12,14 @@ A tidy API for network manipulation with Graph-tool inspired by tidygraph.
 
   - tidy and functional API for graph wranling with the graph-tool library.
 
-## Installation
+## Setting up conda environment
 
 `
-conda create --name graph_tool_env python=3.6
-conda activate graph_tool_env
-conda install -c conda-forge graph-tool
-conda install -c conda-forge ipython jupyter pandas
-pip install cython networkx fa2 matplotlib ipykernel
+conda create --name graph_tool_env python=3.6 &&
+conda activate graph_tool_env &&
+conda install -c conda-forge graph-tool &&
+conda install -c conda-forge ipython jupyter pandas &&
+pip install cython networkx fa2 matplotlib ipykernel &&
 python -m ipykernel install --user --name=graph_tool_env # optional: to work within jupyter notebook
 `
 
