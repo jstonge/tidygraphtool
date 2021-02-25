@@ -3,9 +3,9 @@ import graph_tool.all as gt
 
 
 def as_data_frame(G: gt.Graph) -> pd.DataFrame:
-    if G.active == 'nodes':
+    if G.gp.active == 'nodes':
         return _nodes2dataframe(G)
-    elif G.active == 'edges':
+    elif G.gp.active == 'edges':
         return _edges2dataframe(G)
     else:
         raise ValueError("Nodes or edges must be active")
