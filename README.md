@@ -20,7 +20,7 @@ Graph-tool is best installed in a fresh environment.
 conda create --name graph_tool_env python=3.6 &&
 conda activate graph_tool_env &&
 conda install -c conda-forge graph-tool &&
-conda install -c conda-forge ipython jupyter pandas &&
+conda install -c conda-forge ipython jupyter pandas pyarrow &&
 pip install networkx matplotlib ipykernel &&
 python -m ipykernel install --user --name=graph_tool_env
 `
