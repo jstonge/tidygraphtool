@@ -6,7 +6,16 @@ import pandas as pd
 
 from .edgedataframe import EdgeDataFrame, EdgeSeries
 from .nodedataframe import NodeDataFrame, NodeSeries
-from .utils import guess_df_type, check_column
+from .utils import (
+    assert_edges_edges_equal, 
+    guess_df_type, 
+    check_column, 
+    check_null_values, 
+    _convert_types2gt, 
+    assert_nodes_nodes_equal,
+    assert_edges_edges_equal,
+    assert_index_reset
+)
 
 def augment_prop(
     G: gt.Graph,
@@ -23,10 +32,8 @@ def augment_prop(
     :param prop_name: String that matches the colname. 
     :return: A `Graph_tool` object
     """
-    if guess_df_type(x) is 'NodeDataFrame': x=NodeDataFrame(x)
-    if guess_df_type(x) is 'EdgeDataFrame': x=EdgeDataFrame(x)
-
-    if isinstance(x, (NodeDataFrame, NodeSeries)):
+    
+    if isinstance(x, (NodeDataFrame, NodeSeries)) or guess_df_type(x) == 'NodeDataFrame':
         return _augment_prop_nodes(G, x, prop_name)
     else:
         return _augment_prop_edges(G, x, prop_name)
@@ -40,28 +47,33 @@ def _augment_prop_nodes(G: gt.Graph,
     if prop_name is None:
         prop_name = nodes.columns[0]
 
-    check_column(nodes, column_names = [prop_name], present=True)
+    # check_column(nodes, column_names = [prop_name], present=True)
+    check_null_values(nodes, [prop_name])
+    
+    # Create internal properties maps
+    prop_type = _convert_types2gt(nodes, prop_name)
+    vprop = G.new_vp(f"{prop_type}")
+    G.vertex_properties[f"{prop_name}"] = vprop
 
-    if nodes[f'{prop_name}'].isnull().values.any() == True:
-        raise ValueError("There are NAs in the col")
+    assert_nodes_nodes_equal(G, nodes)
+    assert_index_reset(nodes)
+    
+    if 'name' in nodes.columns:
+        if all([len(_) == 0 for _ in G.vp.name]) == False:
+            nodes = _reorder_nodes_like_g(G, nodes)
 
-    prop_type = str(nodes[f"{prop_name}"].dtype)
-    if prop_type == "object":
-        prop_type = "string"
-    elif prop_type == "float64":
-        prop_type = "float"
-    elif re.match(r"^int", prop_type): 
-        prop_type = prop_type + "_t"
+    for i in range(len(nodes)):
+        # Augment graph with nodes metadata
+        vprop[i] = nodes[f"{prop_name}"][i]
+    return G
 
-    np = G.new_vp(f"{prop_type}")
-    G.vertex_properties[f"{prop_name}"] = np
 
-    if len(list(G.vertices())) == len(nodes):
-        for i in range(len(nodes)):
-            np[i] = nodes[f"{prop_name}"][i]
-        return G
-    else:
-        raise ValueError("Nodes in G has not the same length than nodes data frame.")
+def _reorder_nodes_like_g(G, nodes):
+    ordered_name_g = list(G.vp.name)
+    nodes = nodes.set_index(nodes.name)
+    nodes = nodes.loc[ordered_name_g]
+    nodes = nodes.reset_index(drop=True)
+    return nodes
 
 
 def _augment_prop_edges(G: gt.Graph, 
@@ -70,27 +82,20 @@ def _augment_prop_edges(G: gt.Graph,
 
     edges = EdgeDataFrame(edges)
 
-    if edges[f'{prop_name}'].isnull().values.any() == True:
-        raise ValueError("There are NAs in the col")
-    check_column(edges, column_names = [prop_name])
+    # check_column(edges, column_names = [prop_name])
+    check_null_values(edges, [prop_name])
+    
+    # Create internal properties maps
+    prop_type = _convert_types2gt(edges, prop_name)
+    eprop = G.new_ep(f"{prop_type}")
+    G.edge_properties[f"{prop_name}"] = eprop
+    
+    assert_edges_edges_equal(G, edges)
+    assert_index_reset(edges)
 
-    prop_type = str(edges[f"{prop_name}"].dtype)
-    if prop_type == "object":
-        prop_type = "string"
-    elif prop_type == "float64":
-        prop_type = "float"
-    elif re.match(r"^int", prop_type): 
-        prop_type = prop_type + "_t"
-    else:
-        raise ValueError("Failed to guess type")
+    for i in range(len(edges)):
+        # Augment graph with edge metadata
+        e =  G.edge(edges.source[i], edges.target[i])
+        eprop[e] = edges.loc[i, f"{prop_name}"]
+    return G
 
-    ep = G.new_ep(f"{prop_type}")
-    G.edge_properties[f"{prop_name}"] = ep
-
-    if len(list(G.edges())) == len(edges):
-        for i in range(len(edges)):
-            e =  G.edge(edges.source[i], edges.target[i])
-            ep[e] = edges.loc[i, f"{prop_name}"]
-        return G
-    else:
-        raise ValueError("Edges in G has not the same length than edges data frame.")

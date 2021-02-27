@@ -14,8 +14,8 @@ def as_data_frame(G: gt.Graph) -> pd.DataFrame:
 def _edges2dataframe(G: gt.Graph) -> pd.DataFrame:
     """Takes a Graph-tool graph object and returns edges data frame"""
     tmp_df = pd.DataFrame(list(G.edges()), columns=["source", "target"])
-    tmp_df["source"] = tmp_df.source.astype(str)
-    tmp_df["target"] = tmp_df.target.astype(str)
+    tmp_df["source"] = tmp_df.source.astype(int)
+    tmp_df["target"] = tmp_df.target.astype(int)
     return tmp_df
 
 
@@ -28,12 +28,21 @@ def _nodes2dataframe(G: gt.Graph) -> pd.DataFrame:
         prop_dfs = pd.concat(prop_dfs, axis=1)
 
         if 'name' in prop_dfs.columns:
-            prop_dfs = prop_dfs.rename(columns={"name":"label"})
+            name_convertible_to_int = all(prop_dfs.name.str.isdigit())
+            if name_convertible_to_int == False:
+                prop_dfs = prop_dfs.rename(columns={"name":"label"})
+                prop_dfs["name"] = prop_dfs.index
+                prop_dfs["name"] = prop_dfs["name"].astype(str)
+            
+            else:
+                if all(prop_dfs.name.astype(int) != prop_dfs.index):
+                    prop_dfs = prop_dfs.rename(columns={"name":"label"})
+                    prop_dfs["name"] = prop_dfs.index
+                    prop_dfs["name"] = prop_dfs["name"].astype(str)
 
-        prop_dfs["name"] = prop_dfs.index
-        prop_dfs["name"] = prop_dfs["name"].astype(str)
-
-        return prop_dfs
+        
+        other_cols = list(prop_dfs.loc[:, prop_dfs.columns != 'name'])
+        return prop_dfs.reorder_columns(["name"] + other_cols)
 
     else:
         return pd.DataFrame({"name":list(G.vertices())})  

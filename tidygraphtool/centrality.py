@@ -1,4 +1,5 @@
 from .nodedataframe import NodeDataFrame
+from .edgedataframe import EdgeDataFrame
 from .context import expect_nodes, expect_edges
 
 import pandas as pd
@@ -14,7 +15,7 @@ def centrality_betweenness(G: gt.Graph) -> pd.Series:
 def centrality_edge_betweenness(G: gt.Graph) -> pd.Series:
     expect_edges(G)
     _, bet = gt.betweenness(G)
-    return NodeDataFrame({"bet": list(bet)})["bet"]
+    return EdgeDataFrame({"bet": list(bet)})["bet"]
 
 
 def centrality_closeness(G: gt.Graph) -> pd.Series:

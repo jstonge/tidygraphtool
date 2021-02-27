@@ -4,7 +4,7 @@ import graph_tool.all as gt
 import networkx as nx
 
 from .context import activate
-from .gt_graph import as_gt_graph, _make_index
+from .gt_graph import as_gt_graph, _indexify_edges
 from .as_data_frame import as_data_frame
 from .utils import check_column
 
@@ -22,7 +22,7 @@ def networkx_to_df(G):
     # !TODO: check if nx is installed
     edges = nx.to_pandas_edgelist(G)
     check_column(edges, column_names=["source", "target"], present=True)
-    return  _make_index(edges)
+    return  _indexify_edges(edges)
 
 
 def as_networkx(G: gt.Graph,
