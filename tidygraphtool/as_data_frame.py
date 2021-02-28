@@ -1,3 +1,4 @@
+from tidygraphtool.context import expect_edges, expect_nodes
 import pandas as pd
 import graph_tool.all as gt 
 
@@ -10,17 +11,31 @@ def as_data_frame(G: gt.Graph) -> pd.DataFrame:
     else:
         raise ValueError("Nodes or edges must be active")
 
-
+#!TODO: Add metadata
 def _edges2dataframe(G: gt.Graph) -> pd.DataFrame:
     """Takes a Graph-tool graph object and returns edges data frame"""
-    tmp_df = pd.DataFrame(list(G.edges()), columns=["source", "target"])
-    tmp_df["source"] = tmp_df.source.astype(int)
-    tmp_df["target"] = tmp_df.target.astype(int)
-    return tmp_df
+    expect_edges(G)
+    edges_df = pd.DataFrame(list(G.edges()), columns=["source", "target"])\
+                 .assign(source = lambda x: x.source.astype(int),
+                         target = lambda x: x.target.astype(int))
+    
+    edgecols = list(G.ep)
+    if len(edgecols) >= 1:
+        if len(edgecols) == 1:
+            edges_meta = pd.DataFrame({f"{edgecols[0]}": list(G.ep[f"{edgecols[0]}"])})
+        elif len(edgecols) > 1:
+            edges_meta = pd.concat([pd.DataFrame({f"{edgecols[i]}": list(G.ep[f"{edgecols[i]}"])})
+                                    for i in range(len(edgecols))])
+        return pd.concat([edges_df, edges_meta], axis=1)
+    else:
+        return edges_df
 
 
 def _nodes2dataframe(G: gt.Graph) -> pd.DataFrame:
-    """Takes a Graph-tool graph object and returns nodes data frame"""
+    """
+    Takes a Graph-tool graph object and returns nodes data frame.
+    """
+    expect_nodes(G)
     if len(G.vp) != 0:
         prop_dfs = []
         for prop in G.vp:
@@ -40,7 +55,6 @@ def _nodes2dataframe(G: gt.Graph) -> pd.DataFrame:
                     prop_dfs["name"] = prop_dfs.index
                     prop_dfs["name"] = prop_dfs["name"].astype(str)
 
-        
         other_cols = list(prop_dfs.loc[:, prop_dfs.columns != 'name'])
         return prop_dfs.reorder_columns(["name"] + other_cols)
 

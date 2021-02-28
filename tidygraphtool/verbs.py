@@ -1,10 +1,11 @@
 import re
-from tidygraphtool.context import expect_nodes
+from tidygraphtool.context import expect_edges, expect_nodes
 from tidygraphtool.as_data_frame import as_data_frame
 import graph_tool.all as gt
 import pandas as pd
 from typing import Callable, List
 import numpy as np
+from functools import singledispatch
 
 from .augment import augment_prop
 from .as_data_frame import as_data_frame
@@ -18,15 +19,30 @@ def filter_on(G: gt.Graph, criteria: str) -> gt.Graph:
 
     Name and method is heavily inspired from pyjanitor.
     """
-    df = as_data_frame(G)
-    #!TODO: check_column(nodes, ...)
-    df_tmp = df.query(criteria)
-    df["bp"] = np.where(df["name"].isin(df_tmp["name"]), True, False)
-    G = augment_prop(G, df, prop_name="bp")
-    G = gt.GraphView(G, vfilt=G.vp.bp)
-    G = gt.Graph(G, prune=True)
-    del G.properties[("v", "bp")]
-    return G
+    if G.gp.active == "nodes":
+        expect_nodes(G)
+        df = NodeDataFrame(as_data_frame(G))
+        #!TODO: check_column(nodes, ...)
+        df_tmp = df.query(criteria)
+        df["bp"] = np.where(df["name"].isin(df_tmp["name"]), True, False)
+        G = augment_prop(G, df, prop_name="bp")
+        G = gt.GraphView(G, vfilt=G.vp.bp)
+        G = gt.Graph(G, prune=True)
+        del G.properties[("v", "bp")]
+        return G
+    elif G.gp.active == "edges":
+        expect_edges(G)
+        df = EdgeDataFrame(as_data_frame(G))
+        df_tmp = df.query(criteria)
+        df["bp"] = np.where(df["source"].isin(df_tmp["source"]) & \
+            df["target"].isin(df_tmp["target"]), True, False)
+        G = augment_prop(G, df, prop_name="bp")
+        G = gt.GraphView(G, efilt=G.ep.bp)
+        G = gt.Graph(G, prune=True)
+        del G.properties[("e", "bp")]
+        return G
+    else:
+        raise ValueError("Context must be activated to nodes or edges")
 
 
 def left_join(G: gt.Graph, 
@@ -49,7 +65,7 @@ def left_join(G: gt.Graph,
     return G
 
 
-def add_column(
+def add_property(
     G: gt.Graph,
     column_name: str,
     func: Callable[[gt.Graph], pd.Series]
@@ -63,7 +79,9 @@ def add_column(
     return augment_prop(G, df, prop_name=column_name)
 
 
-def add_columns(
+#!TODO: Only works with group_hsbm, not generally, as we cannot pass colnames.
+#!TODO: Write tests to make sure that groups correspond to nodes in g.
+def add_properties(
     G: gt.Graph,
     func: Callable[[gt.Graph], pd.Series],
 ) -> gt.Graph:

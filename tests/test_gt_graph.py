@@ -16,7 +16,7 @@ def get_dat():
 
 def test_gt_graph_dict_index():
     nodes, edges = get_dat()
-    g = as_gt_graph({"nodes":nodes, "edges":edges})
+    g = gt_graph(nodes=nodes, edges=edges)
     nodes_g = as_data_frame(g)
     activate(g, "edges")
     edges_g = as_data_frame(g)

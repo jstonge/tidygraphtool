@@ -6,6 +6,13 @@ import pandas as pd
 import graph_tool.all as gt 
 
 
+
+def centrality_betweenness(G: gt.Graph) -> pd.Series:
+    expect_nodes(G)
+    bet, _ = gt.betweenness(G)
+    return NodeDataFrame({"bet": list(bet)})["bet"]
+
+
 def centrality_betweenness(G: gt.Graph) -> pd.Series:
     expect_nodes(G)
     bet, _ = gt.betweenness(G)

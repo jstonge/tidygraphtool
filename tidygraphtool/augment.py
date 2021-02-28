@@ -4,6 +4,7 @@ import re
 import graph_tool.all as gt
 import pandas as pd
 
+from .as_data_frame import as_data_frame
 from .edgedataframe import EdgeDataFrame, EdgeSeries
 from .nodedataframe import NodeDataFrame, NodeSeries
 from .utils import (
@@ -33,10 +34,16 @@ def augment_prop(
     :return: A `Graph_tool` object
     """
     
-    if isinstance(x, (NodeDataFrame, NodeSeries)) or guess_df_type(x) == 'NodeDataFrame':
+    if isinstance(x, (NodeDataFrame, NodeSeries)):
         return _augment_prop_nodes(G, x, prop_name)
-    else:
+    elif isinstance(x, (EdgeDataFrame, EdgeSeries)):
         return _augment_prop_edges(G, x, prop_name)
+    elif guess_df_type(x) == 'NodeDataFrame':
+        return _augment_prop_nodes(G, x, prop_name)
+    elif guess_df_type(x) == 'EdgeDataFrame':
+        return _augment_prop_edges(G, x, prop_name)
+    else:
+        raise ValueError("Unknown format")
 
 def _augment_prop_nodes(G: gt.Graph, 
                         nodes: Union[NodeDataFrame, NodeSeries], 
@@ -70,10 +77,16 @@ def _augment_prop_nodes(G: gt.Graph,
 
 def _reorder_nodes_like_g(G, nodes):
     ordered_name_g = list(G.vp.name)
-    nodes = nodes.set_index(nodes.name)
+    x = _find_namecol(G, nodes)
+    nodes = nodes.set_index(nodes[f'{x}'])
     nodes = nodes.loc[ordered_name_g]
     nodes = nodes.reset_index(drop=True)
     return nodes
+
+def _find_namecol(G, nodes):
+    names_g = set(list(G.vp.name))
+    return [c for c in nodes.columns 
+            if set(nodes[f"{c}"]) == names_g][0]
 
 
 def _augment_prop_edges(G: gt.Graph, 
@@ -92,7 +105,11 @@ def _augment_prop_edges(G: gt.Graph,
     
     assert_edges_edges_equal(G, edges)
     assert_index_reset(edges)
-
+    
+    if 'source' not in edges:
+        edges_df = as_data_frame(G)
+        edges = pd.concat([edges_df, edges])
+    
     for i in range(len(edges)):
         # Augment graph with edge metadata
         e =  G.edge(edges.source[i], edges.target[i])
