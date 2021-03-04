@@ -20,23 +20,12 @@ Graph-tool is best installed in a fresh environment.
 conda create --name graph_tool_env &&
 conda activate graph_tool_env &&
 conda install -c conda-forge graph-tool &&
-<<<<<<< HEAD
-<<<<<<< HEAD
-conda install -c conda-forge ipython jupyter pandas &&
+conda install -c conda-forge ipython jupyter pandas pandas-flavor &&
 pip install networkx matplotlib ipykernel pyarrow 
 
 # optional on jupyter notebook
 # python -m ipykernel install --user --name=graph_tool_env
 ```
-=======
-conda install -c conda-forge ipython jupyter pandas pyarrow pandas-flavor &&
-=======
-conda install -c conda-forge ipython jupyter pandas pyarrow &&
->>>>>>> e0646b57bdfe23238bfa5c1f6f91180c2e375eb2
-pip install networkx matplotlib ipykernel &&
-python -m ipykernel install --user --name=graph_tool_env
-`
->>>>>>> 9b43a8766b5d50d92d2390ecdc3cbe989685d306
 
 ## INSPIRATION
  - `graph_tool`: tidygraph is thin wrapper of graph_tool (https://graph-tool.skewed.de/).
