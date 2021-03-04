@@ -16,6 +16,13 @@ def test_augment_nodes():
   nodes, edges = get_dat()
   g = as_gt_graph(edges)
   augment_prop(g, nodes, "job")
-  nodes_g = as_data_frame(g).sort_values("label").loc[:, ["label", "job"]].to_dict(orient="list")
-  nodes = nodes.sort_values("name").rename(columns={"name":"label"}).to_dict(orient="list")
+  
+  nodes_g = as_data_frame(g).sort_values("label")\
+                            .loc[:, ["label", "job"]]\
+                            .to_dict(orient="list")
+  
+  nodes = nodes.sort_values("name")\
+               .rename(columns={"name":"label"})\
+               .to_dict(orient="list")
+  
   assert nodes == nodes_g

@@ -16,8 +16,10 @@ from .edgedataframe import EdgeDataFrame, EdgeSeries
 
 def filter_on(G: gt.Graph, criteria: str) -> gt.Graph:
     """Filter tidystyle on a particular criteria.
-
-    Name and method is heavily inspired from pyjanitor.
+    
+    edges = pd.DataFrame({"source":[1,4,3,2], "target":[2,3,2,1]})
+    g = as_gt_graph(edges)
+    filter_on(g, "source == 2")
     """
     if G.gp.active == "nodes":
         expect_nodes(G)

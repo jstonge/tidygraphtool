@@ -13,7 +13,10 @@ def as_data_frame(G: gt.Graph) -> pd.DataFrame:
 
 #!TODO: Add metadata
 def _edges2dataframe(G: gt.Graph) -> pd.DataFrame:
-    """Takes a Graph-tool graph object and returns edges data frame"""
+    """Takes a Graph-tool graph object and returns edges data frame.
+    
+    Edges will always correspond to node index.
+    """
     expect_edges(G)
     edges_df = pd.DataFrame(list(G.edges()), columns=["source", "target"])\
                  .assign(source = lambda x: x.source.astype(int),
@@ -42,7 +45,9 @@ def _nodes2dataframe(G: gt.Graph) -> pd.DataFrame:
             prop_dfs.append(pd.DataFrame({f"{prop}": list(G.vp[f"{prop}"])}))
         prop_dfs = pd.concat(prop_dfs, axis=1)
 
-        if 'name' in prop_dfs.columns:
+        main_vprop = list(G.vp)[0]
+        if 'name' in prop_dfs.columns and 'name' == main_vprop:
+            # Making sure that name var does not conflict with anything
             name_convertible_to_int = all(prop_dfs.name.str.isdigit())
             if name_convertible_to_int == False:
                 prop_dfs = prop_dfs.rename(columns={"name":"label"})

@@ -3,7 +3,7 @@
 from tidygraphtool.as_data_frame import as_data_frame
 from typing import (
     Iterable,
-    Union, 
+    Union,
     Hashable,
     Optional
 )
@@ -73,40 +73,45 @@ def check_column(
                 f"{column_name} already present in dataframe columns!"
             )
 
+
 def check_null_values(df: pd.DataFrame,  column_names: Union[Iterable, str]):
     """
     One-liner syntactic sugar for checking the null values of columns.
     :raises ValueError: if data is null values.
     """
     check_column(df, column_names)
-    assert any([df[f'{colname}'].isnull().values.any() == True 
-               for colname 
-               in column_names]) == False
+    assert any([df[f'{colname}'].isnull().values.any() == True
+                for colname
+                in column_names]) == False
+
 
 def _extract_nodes(edges: pd.DataFrame) -> pd.DataFrame:
     # We loose order here. Issues when we first create graph with
     # edgelist, then we want to augment it.
-    all_users = set(edges.source).union(set(edges.target))  
-    return pd.DataFrame(all_users).rename(columns={0:"name"}).astype(str)
+    all_users = set(edges.iloc[:, 0]).union(set(edges.iloc[:, 1]))
+    return pd.DataFrame(all_users).rename(columns={0: "name"}).astype(str)
 
 
-def assert_nodes_edges_equal(nodes, edges):
-    check_column(nodes, ["name"])
-    
-    x1 = nodes["name"].astype(str)
+def assert_nodes_edges_equal(nodes, edges, node_key):
+    check_column(nodes, [f"{node_key}"])
+
+    x1 = nodes[f"{node_key}"].astype(str)
     x2 = _extract_nodes(edges)["name"]
 
     assert set(x1) == set(x2)
+
 
 def assert_nodes_nodes_equal(G, nodes_df):
     nb_nodes_g = len(list(G.vertices()))
     nb_nodes_df = len(nodes_df)
     assert nb_nodes_g == nb_nodes_df
 
+
 def assert_edges_edges_equal(G, edges_df):
     nb_edges_g = len(list(G.edges()))
     nb_edges_df = len(edges_df)
     assert nb_edges_g == nb_edges_df
+
 
 def assert_index_reset(df):
     assert all(df.index == range(len(df)))
@@ -129,25 +134,44 @@ def assert_index_reset(df):
 #     raise ValueError("Not the same")
 
 
+def assert_edges_indexified(nodes, edges):
+    assert set(edges.source).union(set(edges.target)) == set(nodes.index)
+
+
+def assert_nodes_mergeable(nodes, edges, left_key, right_key):
+    assert all(edges[f"{left_key}"].isin(nodes[f"{right_key}"]))
+
+
+def _find_namecol(x, nodes):
+    if isinstance(x, gt.Graph):
+        namecol = set(list(x.vp.name))
+    elif guess_df_type(x) == "EdgeDataFrame":
+        namecol = set(x.source).union(set(x.target))
+    else:
+        raise ValueError("Unable to guess x")
+    return [c for c in nodes.columns
+            if set(nodes[f"{c}"]) == namecol][0]
+
+
 def _convert_types2gt(df, prop_name):
     check_column(df, [prop_name], present=True)
     prop_type = str(df[f"{prop_name}"].dtype)
-    
+
     if prop_type == "object":
         prop_type = "string"
     elif prop_type == "float64":
         prop_type = "float"
-    elif re.match(r"^int", prop_type): 
+    elif re.match(r"^int", prop_type):
         prop_type = prop_type + "_t"
     elif prop_type == 'bool':
         prop_type = 'bool'
     else:
         raise ValueError("Failed to guess type")
-    
+
     return prop_type
 
 
-def guess_df_type(x:pd.DataFrame) -> str:
+def guess_df_type(x: pd.DataFrame) -> str:
     x = pd.DataFrame(x)
     colnames = x.columns.str.lower()
     if any(colnames.isin(["source", "target", "from", "to", "weight"])):
@@ -158,11 +182,11 @@ def guess_df_type(x:pd.DataFrame) -> str:
         raise ValueError("Unable to guess dataframe type")
 
 
-def guess_dict_type(x:list) -> str:
+def guess_dict_type(x: list) -> str:
     if len(x) == 2:
-        x1, x2 =  [_ for _ in x]  
-        if any([_ in ['nodes', 'vertices'] for _ in (x1, x2)])  & \
-            any([_ in ['edges', 'links'] for _ in (x1, x2)]) :
+        x1, x2 = [_ for _ in x]
+        if any([_ in ['nodes', 'vertices'] for _ in (x1, x2)]) & \
+                any([_ in ['edges', 'links'] for _ in (x1, x2)]):
             return 'node_edge'
         else:
             raise ValueError("Unknowen list format")
@@ -213,5 +237,3 @@ def reorder_columns(
         ),
         copy=False,
     )
-
-
