@@ -21,6 +21,7 @@ conda create --name graph_tool_env &&
 conda activate graph_tool_env &&
 conda install -c conda-forge graph-tool &&
 <<<<<<< HEAD
+<<<<<<< HEAD
 conda install -c conda-forge ipython jupyter pandas &&
 pip install networkx matplotlib ipykernel pyarrow 
 
@@ -29,6 +30,9 @@ pip install networkx matplotlib ipykernel pyarrow
 ```
 =======
 conda install -c conda-forge ipython jupyter pandas pyarrow pandas-flavor &&
+=======
+conda install -c conda-forge ipython jupyter pandas pyarrow &&
+>>>>>>> e0646b57bdfe23238bfa5c1f6f91180c2e375eb2
 pip install networkx matplotlib ipykernel &&
 python -m ipykernel install --user --name=graph_tool_env
 `
