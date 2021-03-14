@@ -1,6 +1,6 @@
 """Miscellaneous internal tidygraphtool helper functions."""
 
-from tidygraphtool.as_data_frame import as_data_frame
+from .as_data_frame import as_data_frame
 from typing import (
     Iterable,
     Union,
@@ -18,9 +18,6 @@ import pandas_flavor as pf
 def check(varname: str, value, expected_types: list):
     """
     One-liner syntactic sugar for checking types.
-    It can also check callables.
-    Should be used like this::
-        check('x', x, [int, float])
 
     :param varname: The name of the variable.
     :param value: The value of the varname.
@@ -49,12 +46,7 @@ def check_column(
 ):
     """
     One-liner syntactic sugar for checking the presence or absence of columns.
-    Should be used like this::
-        check(df, ['a', 'b'], present=True)
-    This will check whether columns "a" and "b" are present in df's columns.
-    One can also guarantee that "a" and "b" are not present
-    by switching to ``present = False``.
-
+    
     :param df: The name of the variable.
     :param column_names: A list of column names we want to check to see if
         present (or absent) in df.
@@ -115,23 +107,6 @@ def assert_edges_edges_equal(G, edges_df):
 
 def assert_index_reset(df):
     assert all(df.index == range(len(df)))
-
-# def assert_gt_edgelist_equal(G: gt.Graph, edges2: pd.DataFrame):
-#     activate(G, "edges")
-#     edges1 = as_data_frame(G).loc[:, ["source", "target"]]\
-#                                 .assign(source = lambda x: x.source.map(int),
-#                                         target = lambda x: x.target.map(int))\
-#                                 .sort_values(["source", "target"])\
-#                                 .reset_index(drop=True)
-
-#     edges2 = make_index(edges2).loc[:, ["source", "target"]]\
-#                                 .assign(source = lambda x: x.source.map(int),
-#                                         target = lambda x: x.target.map(int))\
-#                                 .sort_values(["source", "target"])\
-#                                 .reset_index(drop=True)
-
-#   if edges1.equals(edges2) == False:
-#     raise ValueError("Not the same")
 
 
 def assert_edges_indexified(nodes, edges):
@@ -197,22 +172,9 @@ def reorder_columns(
     df: pd.DataFrame, column_order: Union[Iterable[str], pd.Index, Hashable]
 ) -> pd.DataFrame:
     """Reorder DataFrame columns by specifying desired order as list of col names.
-    Columns not specified retain their order and follow after specified cols.
-    Validates column_order to ensure columns are all present in DataFrame.
-    This method does not mutate the original DataFrame.
 
-    Functional usage syntax:
-    Given `DataFrame` with column names `col1`, `col2`, `col3`:
-    .. code-block:: python
-        df = reorder_columns(df, ['col2', 'col3'])
-    Method chaining syntax:
-    .. code-block:: python
-        import pandas as pd
-        import janitor
-        df = pd.DataFrame(...).reorder_columns(['col2', 'col3'])
-    The column order of `df` is now `col2`, `col3`, `col1`.
-    Internally, this function uses `DataFrame.reindex` with `copy=False`
-    to avoid unnecessary data duplication.
+
+
     :param df: `DataFrame` to reorder
     :param column_order: A list of column names or Pandas `Index`
         specifying their order in the returned `DataFrame`.

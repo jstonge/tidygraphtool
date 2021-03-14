@@ -31,6 +31,21 @@ def gt_graph(
                               "target": ["Joan", "Melvin", "Alice", "Joan"]})
         gt_graph(nodes, edges)
 
+    NOTE
+    ====
+    Params are adapted directly from thomasp85's tidygraph api in R 
+
+    :param nodes: A `data.frame` containing information about the nodes in the graph.
+        If `edges.target` and/or `edges.from` are characters then they will be
+        matched to the column named according to `node_key` in nodes, if it exists.
+        If not, they will be matched to the first column.
+    :param edges:  A `data.frame` containing information about the edges in the
+        graph. The terminal nodes of each edge must either be encoded in a `target` and
+        `source` column, or in the two first columns, as integers. These integers refer to
+        `nodes` index.
+    :directed:  Should the constructed graph be directed (defaults to `TRUE`)
+    :node_key: The name of the column in `nodes` that character represented
+        `target` and `source` columns should be matched against. 
     :return: A `Graph_tool` object
     """
     return as_gt_graph({"nodes": nodes, "edges": edges}, 
@@ -114,16 +129,6 @@ def _as_graph_node_edge(x: Dict[pd.DataFrame, pd.DataFrame], node_key: str = 'na
     nodes = [v[1] for v in x.items() if v[0] in ['nodes', 'vertices']][0]
     edges = [v[1] for v in x.items() if v[0] in ['edges', 'links']][0]
 
-    # We make sure that node_key is name
-    # if node_key != 'name':
-    #     if 'name' not in nodes.columns:
-    #         nodes = nodes.rename(columns={f"{node_key}": "name"})
-    #     else:
-    #         nodes = nodes.rename(columns={"name": "name_old", f"{node_key}": "name"})
-
-    # if "name" not in nodes.columns:
-    #     nodes = nodes.rename(columns={nodes.columns[0]: "name"})
-
     assert_nodes_edges_equal(nodes, edges, node_key), "Is `name` the node key?"
 
     # Making sure that node_key is in front of everything and of type string
@@ -149,10 +154,6 @@ def _indexify_edges(
     :param edges: A `data Frame` containing information about the nodes in the G.
     :return: edge dataframe 
     """
-    # if nodes is None:
-    #     nodes = _extract_nodes(edges)  # does not keep order. Does that matter?
-    # if "name" not in nodes.columns:
-    #     nodes = nodes.rename(columns={nodes.columns[0]: "name"})
 
     nodes = nodes.copy()
 

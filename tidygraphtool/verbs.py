@@ -1,6 +1,6 @@
 import re
-from tidygraphtool.context import expect_edges, expect_nodes
-from tidygraphtool.as_data_frame import as_data_frame
+from .context import expect_edges, expect_nodes
+from .as_data_frame import as_data_frame
 import graph_tool.all as gt
 import pandas as pd
 from typing import Callable, List
