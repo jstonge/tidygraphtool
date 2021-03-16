@@ -13,6 +13,20 @@ def get_dat():
                           "weight": [3,3,2,10]})
     return nodes, edges
 
+def get_dat2():
+    """
+    Edges already indexed. Thus they do not correspond to nodes name.
+
+    This situation is typical when we convert from R tidygraph to python.
+    """
+    nodes = pd.DataFrame({"id": [1,2,3,4], 
+                          "name": ["Bob", "Alice", "Joan", "Melvin"],
+                          "job":  ["teacher", "driver", "dancer", "influence"]})
+    edges = pd.DataFrame({"source": [1, 1, 3, 2],
+                          "target": [3, 4, 3, 3],
+                          "weight": [3,3,2,10]})
+    return nodes, edges
+
 def test_as_data_frame_edges():
   nodes, edges = get_dat()
   g=gt_graph(nodes=nodes, edges=edges)
@@ -26,5 +40,10 @@ def test_as_data_frame_edges():
   weight_BJ = edges.query("source=='Bob' & target=='Joan'")['weight'].values[0] == 3
   assert weight_BJ == weight_g_BJ
 
+def test_as_data_frame_diff_node_key():
+  nodes, edges = get_dat2()
+  g=gt_graph(nodes=nodes, edges=edges, node_key="id")
+  df = as_data_frame(g)
+  assert df.columns[0] == 'id'
 
 

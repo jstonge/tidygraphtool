@@ -1,8 +1,9 @@
-from tidygraphtool.context import expect_edges, expect_nodes
+from .context import expect_edges, expect_nodes
 import pandas as pd
+from pipey import Pipeable
 import graph_tool.all as gt 
 
-
+@Pipeable(try_normal_call_first=True)
 def as_data_frame(G: gt.Graph) -> pd.DataFrame:
     if G.gp.active == 'nodes':
         return _nodes2dataframe(G)
@@ -11,7 +12,6 @@ def as_data_frame(G: gt.Graph) -> pd.DataFrame:
     else:
         raise ValueError("Nodes or edges must be active")
 
-#!TODO: Add metadata
 def _edges2dataframe(G: gt.Graph) -> pd.DataFrame:
     """Takes a Graph-tool graph object and returns edges data frame.
     
@@ -60,8 +60,10 @@ def _nodes2dataframe(G: gt.Graph) -> pd.DataFrame:
                     prop_dfs["name"] = prop_dfs.index
                     prop_dfs["name"] = prop_dfs["name"].astype(str)
 
-        other_cols = list(prop_dfs.loc[:, prop_dfs.columns != 'name'])
-        return prop_dfs.reorder_columns(["name"] + other_cols)
-
+            other_cols = list(prop_dfs.loc[:, prop_dfs.columns != 'name'])
+            return prop_dfs.reorder_columns(["name"] + other_cols)
+        else: 
+            other_cols = list(prop_dfs.loc[:, prop_dfs.columns != f'{main_vprop}'])
+            return prop_dfs.reorder_columns([f"{main_vprop}"] + other_cols)
     else:
-        return pd.DataFrame({"name":list(G.vertices())})  
+        return pd.DataFrame({"name":list(G.vertices())})
