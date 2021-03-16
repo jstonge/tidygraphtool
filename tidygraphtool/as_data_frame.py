@@ -1,8 +1,9 @@
 from .context import expect_edges, expect_nodes
 import pandas as pd
+from pipey import Pipeable
 import graph_tool.all as gt 
 
-
+@Pipeable(try_normal_call_first=True)
 def as_data_frame(G: gt.Graph) -> pd.DataFrame:
     if G.gp.active == 'nodes':
         return _nodes2dataframe(G)

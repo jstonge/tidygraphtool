@@ -103,6 +103,7 @@ ENV/
 
 # IDE settings
 .vscode/
+.editorconfig/
 
 # Experimental
 tidygraphtool/GT_graph.py

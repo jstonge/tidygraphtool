@@ -7,13 +7,15 @@ from typing import Callable, List
 import numpy as np
 from functools import singledispatch
 
+from pipey import Pipeable
+
 from .augment import augment_prop
 from .as_data_frame import as_data_frame
 from .utils import check_column
 from .nodedataframe import NodeDataFrame, NodeSeries
 from .edgedataframe import EdgeDataFrame, EdgeSeries
 
-
+@Pipeable(try_normal_call_first=True)
 def filter_on(G: gt.Graph, criteria: str) -> gt.Graph:
     """Filter tidystyle on a particular criteria.
     
@@ -46,7 +48,7 @@ def filter_on(G: gt.Graph, criteria: str) -> gt.Graph:
     else:
         raise ValueError("Context must be activated to nodes or edges")
 
-
+@Pipeable(try_normal_call_first=True)
 def left_join(G: gt.Graph, 
               y: pd.DataFrame, 
               on: str = None
@@ -66,7 +68,7 @@ def left_join(G: gt.Graph,
     [augment_prop(G, x=df, prop_name=c) for c in colnames]
     return G
 
-
+@Pipeable(try_normal_call_first=True)
 def add_property(
     G: gt.Graph,
     column_name: str,
@@ -83,6 +85,7 @@ def add_property(
 
 #!TODO: Only works with group_hsbm, not generally, as we cannot pass colnames.
 #!TODO: Write tests to make sure that groups correspond to nodes in g.
+@Pipeable(try_normal_call_first=True)
 def add_properties(
     G: gt.Graph,
     func: Callable[[gt.Graph], pd.Series],
@@ -113,7 +116,7 @@ def _merge_level_below(df_lvl_below, dat):
                     right_on = f"hsbm_level{lvl_below}", 
                     how = "left")
 
-
+@Pipeable(try_normal_call_first=True)
 def rename(G: gt.Graph, old_column_name: str, new_column_name: str) -> gt.Graph:
     """Rename nodes or edges property."""
     G = G.copy()
@@ -129,7 +132,7 @@ def rename(G: gt.Graph, old_column_name: str, new_column_name: str) -> gt.Graph:
     augment_prop(G, df, new_column_name)
     return G
 
-
+@Pipeable(try_normal_call_first=True)
 def unnest_state(state):
 
     if isinstance(state, gt.BlockState):
