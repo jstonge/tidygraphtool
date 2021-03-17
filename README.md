@@ -3,9 +3,20 @@
 
 A tidy API for network manipulation with Graph-tool inspired by tidygraph.
 
+## Usage
 
-* Free software: MIT license
-* Documentation: https://tidygraphtool.readthedocs.io.
+```python
+from tidygraphtool.all import *
+g = play_sbm(n_k=500)
+(
+  g >>
+    activate("nodes") >>
+    add_property("degree", centrality_degree(g, mode="total")) >>
+    filter_on("degree == 2") >>
+    summary()
+)
+
+```
 
 
 ## Features
