@@ -85,9 +85,16 @@ def _reorder_nodes_like_g(G, prop, nodes):
     vprop_vals = list(G.vp[f"{prop}"])
     
     # Finding col with same vals than main vprop
-    x = [c for c in nodes.columns if set(nodes[f"{c}"]) == set(vprop_vals)][0]
+    x = [c for c in nodes.columns if set(nodes[f"{c}"]) == set(vprop_vals)]
 
-    nodes = nodes.set_index(nodes[f'{x}'])
+    if len(x) == 0:
+        try:
+            vprop_vals = list(G.iter_vertices())
+            x = [c for c in nodes.columns if set(nodes[f"{c}"]) == set(vprop_vals)]
+        except:
+            raise ValueError("No cols in nodes have same values than in G's main vprop")
+
+    nodes = nodes.set_index(nodes[f'{x[0]}'])
     nodes = nodes.loc[vprop_vals]
     nodes = nodes.reset_index(drop=True)
     return nodes

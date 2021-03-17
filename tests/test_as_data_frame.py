@@ -10,7 +10,8 @@ def get_dat():
                           "job":  ["teacher", "driver", "dancer", "influence"]})
     edges = pd.DataFrame({"source": ["Bob", "Bob", "Joan", "Alice"],
                           "target": ["Joan", "Melvin", "Alice", "Joan"],
-                          "weight": [3,3,2,10]})
+                          "weight": [3,3,2,10],
+                          "type": ["pro", "friends", "pro", "friends"]})
     return nodes, edges
 
 def get_dat2():
@@ -47,3 +48,10 @@ def test_as_data_frame_diff_node_key():
   assert df.columns[0] == 'id'
 
 
+def test_as_data_frame_many_props():
+  _, edges = get_dat()
+  g = gt_graph(edges=edges)
+  activate(g, "edges")
+  eprop = g.new_ep("bool")
+  g.ep["bp"] = eprop
+  assert type(as_data_frame(g)) == pd.DataFrame

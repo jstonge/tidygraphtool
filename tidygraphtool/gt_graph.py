@@ -76,7 +76,7 @@ def _data_frame(x, directed=True, node_key='name') -> gt.Graph:
         edgecols = edges.iloc[:, 2::].columns
         if len(edgecols) == 1:
             augment_prop(g, EdgeDataFrame(edges), prop_name=edgecols[0])
-        elif len(edgecols > 1):
+        elif len(edgecols) > 1:
             [augment_prop(g, EdgeDataFrame(edges), prop_name=c) for c in edgecols]
 
         activate(g, "nodes")
@@ -182,7 +182,7 @@ def _indexify_edges(
     return edges.drop(columns=[f"{node_key}_x", f"{node_key}_y"])[cols]
 
 
-def print_gt(G):
+def summary(G):
     if G.gp.active == 'nodes':
         print(as_data_frame(G))
         activate(G, "edges")

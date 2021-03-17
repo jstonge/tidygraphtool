@@ -23,11 +23,3 @@ def test_filter_on_nodes():
   g = as_gt_graph(edges)
   df = as_data_frame(filter_on(g, 'label == "Melvin"'))
   assert df.label.values[0] == 'Melvin'
-
-
-def test_filter_on_edges():
-  _, edges = get_dat()
-  g = as_gt_graph(edges)
-  activate(g, "edges")
-  df = as_data_frame(filter_on(g, 'weight == 10'))
-  assert df.weight.values[0] == 10

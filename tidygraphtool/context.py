@@ -1,7 +1,8 @@
 
 import graph_tool.all as gt
- 
+from pipey import Pipeable
 
+@Pipeable(try_normal_call_first=True)
 def activate(G: gt.Graph, what: str) -> gt.Graph:
   """Activate context of graph object to be in node or edges modes. 
   
@@ -11,6 +12,7 @@ def activate(G: gt.Graph, what: str) -> gt.Graph:
     gprop = G.new_gp('string')
     G.gp["active"] = gprop
     G.gp["active"] = f'{what}' 
+    return G
   else:
     raise ValueError("Can only activate nodes or edges")
 

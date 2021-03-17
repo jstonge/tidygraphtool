@@ -28,7 +28,7 @@ def filter_on(G: gt.Graph, criteria: str) -> gt.Graph:
         df = NodeDataFrame(as_data_frame(G))
         #!TODO: check_column(nodes, ...)
         df_tmp = df.query(criteria)
-        df["bp"] = np.where(df["name"].isin(df_tmp["name"]), True, False)
+        df["bp"] = np.where(df.iloc[:,0].isin(df_tmp.iloc[:,0]), True, False)
         G = augment_prop(G, df, prop_name="bp")
         G = gt.GraphView(G, vfilt=G.vp.bp)
         G = gt.Graph(G, prune=True)
