@@ -15,6 +15,39 @@ import pandas as pd
 import pandas_flavor as pf
 
 
+def assert_nodes_edges_equal(nodes, edges, node_key):
+    check_column(nodes, [f"{node_key}"])
+
+    x1 = nodes[f"{node_key}"].astype(str)
+    x2 = _extract_nodes(edges)["name"]
+
+    assert set(x1) == set(x2)
+
+
+def assert_nodes_nodes_equal(G, nodes_df):
+    nb_nodes_g = len(list(G.vertices()))
+    nb_nodes_df = len(nodes_df)
+    assert nb_nodes_g == nb_nodes_df
+
+
+def assert_edges_edges_equal(G, edges_df):
+    nb_edges_g = len(list(G.edges()))
+    nb_edges_df = len(edges_df)
+    assert nb_edges_g == nb_edges_df
+
+
+def assert_index_reset(df):
+    assert all(df.index == range(len(df)))
+
+
+def assert_edges_indexified(nodes, edges):
+    assert set(edges.source).union(set(edges.target)) == set(nodes.index)
+
+
+def assert_nodes_mergeable(nodes, edges, left_key, right_key):
+    assert all(edges[f"{left_key}"].isin(nodes[f"{right_key}"]))
+
+
 def check(varname: str, value, expected_types: list):
     """
     One-liner syntactic sugar for checking types.
@@ -39,6 +72,12 @@ def check(varname: str, value, expected_types: list):
                 varname=varname, expected_types=expected_types
             )
         )
+
+
+def check_args_order(x, y, z):
+    assert isinstance(x, gt.Graph)
+    assert isinstance(y, str)
+    assert callable(z)
 
 
 def check_column(
@@ -84,50 +123,6 @@ def _extract_nodes(edges: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(all_users).rename(columns={0: "name"}).astype(str)
 
 
-def assert_nodes_edges_equal(nodes, edges, node_key):
-    check_column(nodes, [f"{node_key}"])
-
-    x1 = nodes[f"{node_key}"].astype(str)
-    x2 = _extract_nodes(edges)["name"]
-
-    assert set(x1) == set(x2)
-
-
-def assert_nodes_nodes_equal(G, nodes_df):
-    nb_nodes_g = len(list(G.vertices()))
-    nb_nodes_df = len(nodes_df)
-    assert nb_nodes_g == nb_nodes_df
-
-
-def assert_edges_edges_equal(G, edges_df):
-    nb_edges_g = len(list(G.edges()))
-    nb_edges_df = len(edges_df)
-    assert nb_edges_g == nb_edges_df
-
-
-def assert_index_reset(df):
-    assert all(df.index == range(len(df)))
-
-
-def assert_edges_indexified(nodes, edges):
-    assert set(edges.source).union(set(edges.target)) == set(nodes.index)
-
-
-def assert_nodes_mergeable(nodes, edges, left_key, right_key):
-    assert all(edges[f"{left_key}"].isin(nodes[f"{right_key}"]))
-
-
-def _find_namecol(x, nodes):
-    if isinstance(x, gt.Graph):
-        namecol = set(list(x.vp.name))
-    elif guess_df_type(x) == "EdgeDataFrame":
-        namecol = set(x.source).union(set(x.target))
-    else:
-        raise ValueError("Unable to guess x")
-    return [c for c in nodes.columns
-            if set(nodes[f"{c}"]) == namecol][0]
-
-
 def _convert_types2gt(df, prop_name):
     check_column(df, [prop_name], present=True)
     prop_type = str(df[f"{prop_name}"].dtype)
@@ -144,6 +139,17 @@ def _convert_types2gt(df, prop_name):
         raise ValueError("Failed to guess type")
 
     return prop_type
+
+
+def _find_namecol(x, nodes):
+    if isinstance(x, gt.Graph):
+        namecol = set(list(x.vp.name))
+    elif guess_df_type(x) == "EdgeDataFrame":
+        namecol = set(x.source).union(set(x.target))
+    else:
+        raise ValueError("Unable to guess x")
+    return [c for c in nodes.columns
+            if set(nodes[f"{c}"]) == namecol][0]
 
 
 def guess_df_type(x: pd.DataFrame) -> str:
@@ -199,3 +205,4 @@ def reorder_columns(
         ),
         copy=False,
     )
+

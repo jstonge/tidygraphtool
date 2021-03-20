@@ -5,7 +5,7 @@ import pandas as pd
 from tidygraphtool.gt_graph import *
 
 
-def get_dat():
+def get_dat_simple():
     nodes = pd.DataFrame({"name": ["Bob", "Alice", "Joan", "Melvin"],
                           "job":  ["teacher", "driver", "dancer", "influence"]}) 
     edges = pd.DataFrame({"source": ["Bob", "Bob", "Joan", "Alice"],
@@ -15,7 +15,7 @@ def get_dat():
     return nodes, edges
 
 def test_augment_nodes():
-  nodes, edges = get_dat()
+  nodes, edges = get_dat_simple()
   g = as_gt_graph(edges)
   augment_prop(g, nodes, "job")
   
@@ -30,7 +30,7 @@ def test_augment_nodes():
   assert nodes == nodes_g
 
 def test_augment_edges():
-  nodes, edges = get_dat()
+  nodes, edges = get_dat_simple()
   g = as_gt_graph(edges)
   augment_prop(g, nodes, "job")
   

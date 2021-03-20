@@ -1,7 +1,9 @@
+"""Calculate communities"""
+
 import graph_tool.all as gt
 
-from .nodedataframe import NodeDataFrame, NodeSeries
-from .verbs import unnest_state, _merge_level_below
+from .nodedataframe import NodeDataFrame
+from .verbs import unnest_state
 
 
 def group_sbm(G: gt.Graph, deg_corr: bool = True) -> NodeDataFrame:

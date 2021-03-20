@@ -1,3 +1,4 @@
+"""Active graph in particular states"""
 
 import graph_tool.all as gt
 from pipey import Pipeable
@@ -8,6 +9,7 @@ def activate(G: gt.Graph, what: str) -> gt.Graph:
   
   Sugary syntax that builds on top of internal graph property maps.
   """
+  G = G.copy()
   if what == 'nodes' or what == 'edges':
     gprop = G.new_gp('string')
     G.gp["active"] = gprop

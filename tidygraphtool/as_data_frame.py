@@ -1,3 +1,5 @@
+"""Graph to dataframe functions"""
+
 from .context import expect_edges, expect_nodes
 import pandas as pd
 from pipey import Pipeable

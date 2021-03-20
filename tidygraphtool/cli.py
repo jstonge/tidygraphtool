@@ -1,4 +1,5 @@
 """Console script for tidygraphtool."""
+
 import argparse
 import sys
 
