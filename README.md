@@ -11,7 +11,7 @@ g = play_sbm(n_k=500)
 (
   g >>
     activate("nodes") >>
-    add_property("degree", centrality_degree(g, mode="total")) >>
+    add_property("degree", centrality_degree, mode="total") >>
     filter_on("degree == 2") >>
     summary()
 )
@@ -52,53 +52,24 @@ pip install networkx matplotlib ipykernel pyarrow
 
 
 
-## PROTOYPE FUNCTIONAL INTERFACE INSPIRED FROM THINC
+## PROTOYPE FUNCTIONAL INTERFACE
 
 ```Python
 #### Current
 g = gt_graph(nodes=nodes, edges=edges)
-g = add_property(g, "node_coreness", node_coreness(g))
-g = add_property(g, "pr", centrality_pagerank(g))
+g = add_property(g, "node_coreness", node_coreness)
+g = add_property(g, "pr", centrality_pagerank)
 g = filter_on(g, "node_coreness > 3")
-activate(g, "edges")
-g = add_property(g, "edge_bet", centrality_edge_betweenness(g))
+g = activate(g, "edges")
+g = add_property(g, "edge_bet", centrality_edge_betweenness)
 ```
 ```Python
 #### With pipey, we can currently do
 g = gt_graph(nodes=nodes, edges=edges)
-g = g 
-  >> add_property("node_coreness", node_coreness(g))
-  >> add_property("pr", centrality_pagerank(g))
-  >> filter_on("node_coreness > 3 & pr > 10")
-
-activate(g, "edges")
-
-g = g >> add_property("edge_bet", centrality_edge_betweenness(g))
-```
-
-```Python
-#### Functional like THINC
-g = gt_graph(nodes=nodes, edges=edges)
-
-g =  with_graph(
-  chain(
-    add_property("node_coreness", lambda x: x.node_coreness())
-    add_property("pr", lamba x: x.pagerank())
-    filter_on("node_coreness > 3")
-    activate("edges")
-    add_property("edge_bet", lambda x: x.centrality_edge_betweenness())
-  )
-)
-```
-
-```Python
-#### With operator overloading
-with gt_graph.define_operators({">>": chain}):
-    g = with_graph(
-      add_property("node_coreness", lambda x: x.node_coreness()) 
-      >> add_property("pr", lamba x: x.pagerank()
-      >> filter_on("node_coreness > 3")
-      >> activate("edges")
-      >> add_property("edge_bet", lmabda x: x.centrality_edge_betweenness())
-    )
+g = (g >>
+       add_property("node_coreness", node_coreness(g)) >>
+       add_property("pr", centrality_pagerank(g)) >>
+       filter_on("node_coreness > 3 & pr > 10") >>
+       activate("edges") >>
+       add_property("edge_bet", centrality_edge_betweenness(g)))
 ```
