@@ -1,3 +1,5 @@
+"""Graph to dataframe functions"""
+
 from .context import expect_edges, expect_nodes
 import pandas as pd
 from pipey import Pipeable
@@ -28,7 +30,7 @@ def _edges2dataframe(G: gt.Graph) -> pd.DataFrame:
             edges_meta = pd.DataFrame({f"{edgecols[0]}": list(G.ep[f"{edgecols[0]}"])})
         elif len(edgecols) > 1:
             edges_meta = pd.concat([pd.DataFrame({f"{edgecols[i]}": list(G.ep[f"{edgecols[i]}"])})
-                                    for i in range(len(edgecols))])
+                                    for i in range(len(edgecols))], axis=1)
         return pd.concat([edges_df, edges_meta], axis=1)
     else:
         return edges_df

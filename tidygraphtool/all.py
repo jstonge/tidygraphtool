@@ -10,3 +10,4 @@ from .networkx import *
 from .node import *
 from .nodedataframe import *
 from .verbs import *
+from .play import *

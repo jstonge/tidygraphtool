@@ -1,3 +1,5 @@
+"""Node extension for dataframe"""
+
 from pandas import DataFrame, Series
 
 class NodeDataFrame(DataFrame): 
