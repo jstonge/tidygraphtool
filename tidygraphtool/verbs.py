@@ -64,7 +64,6 @@ def add_property(G, colname:str = None, *args, **kwargs) -> gt.Graph:
 
 
 #!TODO: Only works with group_hsbm, not generally, as we cannot pass colnames.
-#!TODO: Write tests to make sure that groups correspond to nodes in g.
 @Pipeable(try_normal_call_first=True)
 def add_properties(G: gt.Graph, 
                    func: Callable[[gt.Graph], pd.Series]) -> gt.Graph:
@@ -143,22 +142,6 @@ def left_join(G: gt.Graph,
     return G
 
 
-def _merge_level_below(df_lvl_below, dat):
-    lvl_below = list(df_lvl_below.columns)[-1]
-    lvl_below = int(re.sub("hsbm_level", "", lvl_below))
-    
-    df_lvl_above = pd.DataFrame({f"hsbm_level{lvl_below+1}": dat})
-    
-    # index of df level i == block level i-1/agents
-    df_lvl_above[f'hsbm_level{lvl_below}'] = df_lvl_above.index
-    
-    # We left join level i-1 of df_lvl_i onto level i-1 of df_lvl_be
-    return pd.merge(df_lvl_below, df_lvl_above, 
-                    left_on = f"hsbm_level{lvl_below}", 
-                    right_on = f"hsbm_level{lvl_below}", 
-                    how = "left")
-
-
 @Pipeable(try_normal_call_first=True)
 def rename(G: gt.Graph, old_column_name: str, new_column_name: str) -> gt.Graph:
     """Rename nodes or edges property.
@@ -208,25 +191,3 @@ def simplify_edges(G:gt.Graph,
     else:
         raise ValueError("Not implemented yet")
     return G
-
-
-@Pipeable(try_normal_call_first=True)
-def unnest_state(state):
-    """
-    Unnest gt.BlockState object into a dataframe.
-    
-    The function will create one column by level.
-    """
-    if isinstance(state, gt.BlockState):
-        raise ValueError("Not hierarchical block state")
-
-    levels = state.get_levels()
-    list_r_level = [list(r for r in levels[i].get_blocks()) for i in range(len(levels))]
-    com_all_lvl = pd.DataFrame({"hsbm_level0": list_r_level[0]})
-    
-    i=1
-    while (i < len(list_r_level)):
-        com_all_lvl = _merge_level_below(com_all_lvl, list_r_level[i])
-        i += 1
-    
-    return com_all_lvl
