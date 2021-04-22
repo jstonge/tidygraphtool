@@ -32,7 +32,7 @@ conda create --name graph_tool_env &&
 conda activate graph_tool_env &&
 conda install -c conda-forge graph-tool &&
 conda install -c conda-forge ipython jupyter pandas pandas-flavor &&
-pip install networkx matplotlib ipykernel pyarrow 
+pip install matplotlib ipykernel 
 
 # optional on jupyter notebook
 # python -m ipykernel install --user --name=graph_tool_env
