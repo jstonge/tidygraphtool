@@ -89,3 +89,4 @@ tidygraphtool/backend/*
 tidygraphtool/layers/*
 .httr-oauth
 .editorconfig
+.github
