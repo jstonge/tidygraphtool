@@ -1,7 +1,7 @@
 
 # tidygraphtool
 
-A tidy API for network manipulation with Graph-tool inspired by tidygraph.
+A tidy API for network manipulation with Graph-tool inspired by tidygraph. This is an experimental project of mine. Use at your own risk.
 
 ## Usage
 
@@ -21,21 +21,15 @@ g = play_sbm(n_k=500)
 
 ## Features
 
-  - tidy and functional API for graph wranling with the graph-tool library.
+  - tidy and functional API for graph wranling with the [graph-tool library](https://graph-tool.skewed.de/).
 
-## Setting up conda environment
+## Installation
 
-Graph-tool is best installed in a fresh environment. 
+Because that graph-tool is mostly a c++ library, tidygraphtool is best installed from anaconda in a fresh environment. 
 
 ```bash
-conda create --name graph_tool_env &&
-conda activate graph_tool_env &&
-conda install -c conda-forge graph-tool &&
-conda install -c conda-forge ipython jupyter pandas pandas-flavor &&
-pip install matplotlib ipykernel 
-
-# optional on jupyter notebook
-# python -m ipykernel install --user --name=graph_tool_env
+git clone https://github.com/jstonge/tidygraphtool.git
+conda env create --file gt.yml
 ```
 
 ## INSPIRATION
