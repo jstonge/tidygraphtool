@@ -23,19 +23,13 @@ g = play_sbm(n_k=500)
 
   - tidy and functional API for graph wranling with the graph-tool library.
 
-## Setting up conda environment
+## Installation
 
 Graph-tool is best installed in a fresh environment. 
 
 ```bash
-conda create --name graph_tool_env &&
-conda activate graph_tool_env &&
-conda install -c conda-forge graph-tool &&
-conda install -c conda-forge ipython jupyter pandas pandas-flavor &&
-pip install matplotlib ipykernel 
-
-# optional on jupyter notebook
-# python -m ipykernel install --user --name=graph_tool_env
+git clone https://github.com/jstonge/tidygraphtool.git
+conda create --name graph_tool_env --file requirements.txt
 ```
 
 ## INSPIRATION
