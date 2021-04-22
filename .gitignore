@@ -88,3 +88,4 @@ tidygraphtool/GT_graph3.py
 tidygraphtool/backend/*
 tidygraphtool/layers/*
 .httr-oauth
+.editorconfig
