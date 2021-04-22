@@ -21,7 +21,7 @@ g = play_sbm(n_k=500)
 
 ## Features
 
-  - tidy and functional API for graph wranling with the graph-tool library.
+  - tidy and functional API for graph wranling with the [graph-tool library](https://graph-tool.skewed.de/).
 
 ## Installation
 
