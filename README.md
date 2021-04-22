@@ -64,7 +64,7 @@ g = activate(g, "edges")
 g = add_property(g, "edge_bet", centrality_edge_betweenness)
 ```
 ```Python
-#### With pipey, we can currently do
+#### With #pipey, we can currently do
 g = gt_graph(nodes=nodes, edges=edges)
 g = (g >>
        add_property("node_coreness", node_coreness(g)) >>

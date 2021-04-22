@@ -28,7 +28,7 @@ def add_column(df: pd.DataFrame,
     if hasattr(value, "__len__") and not isinstance(
         value, (str, bytes, bytearray)
     ):
-        # if `value` is a list, ndarray, etc.
+
         if len(value) > nrows:
             raise ValueError(
                 "`value` has more elements than number of rows "

@@ -3,7 +3,6 @@
 import re
 import graph_tool.all as gt
 import pandas as pd
-from typing import Callable
 import numpy as np
 
 from pipey import Pipeable
@@ -13,7 +12,6 @@ from .as_data_frame import as_data_frame
 from .utils import check_column, check_args_order
 from .context import expect_edges, expect_nodes
 from .nodedataframe import NodeDataFrame
-from .edgedataframe import EdgeDataFrame
 from .node import node_largest_component
 
 
