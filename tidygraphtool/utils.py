@@ -1,6 +1,6 @@
 """Miscellaneous internal tidygraphtool helper functions."""
 
-from tidygraphtool.as_data_frame import as_data_frame
+from .as_data_frame import as_data_frame
 from typing import (
     Iterable,
     Union,
@@ -15,12 +15,42 @@ import pandas as pd
 import pandas_flavor as pf
 
 
+def assert_nodes_edges_equal(nodes, edges, node_key):
+    check_column(nodes, [f"{node_key}"])
+
+    x1 = nodes[f"{node_key}"].astype(str)
+    x2 = _extract_nodes(edges)["name"]
+
+    assert set(x1) == set(x2)
+
+
+def assert_nodes_nodes_equal(G, nodes_df):
+    nb_nodes_g = len(list(G.vertices()))
+    nb_nodes_df = len(nodes_df)
+    assert nb_nodes_g == nb_nodes_df
+
+
+def assert_edges_edges_equal(G, edges_df):
+    nb_edges_g = len(list(G.edges()))
+    nb_edges_df = len(edges_df)
+    assert nb_edges_g == nb_edges_df
+
+
+def assert_index_reset(df):
+    assert all(df.index == range(len(df)))
+
+
+def assert_edges_indexified(nodes, edges):
+    assert set(edges.source).union(set(edges.target)) == set(nodes.index)
+
+
+def assert_nodes_mergeable(nodes, edges, left_key, right_key):
+    assert all(edges[f"{left_key}"].isin(nodes[f"{right_key}"]))
+
+
 def check(varname: str, value, expected_types: list):
     """
     One-liner syntactic sugar for checking types.
-    It can also check callables.
-    Should be used like this::
-        check('x', x, [int, float])
 
     :param varname: The name of the variable.
     :param value: The value of the varname.
@@ -44,17 +74,18 @@ def check(varname: str, value, expected_types: list):
         )
 
 
+def check_args_order(x, y, z):
+    assert isinstance(x, gt.Graph)
+    assert isinstance(y, str)
+    assert callable(z)
+
+
 def check_column(
     df: pd.DataFrame, column_names: Union[Iterable, str], present: bool = True
 ):
     """
     One-liner syntactic sugar for checking the presence or absence of columns.
-    Should be used like this::
-        check(df, ['a', 'b'], present=True)
-    This will check whether columns "a" and "b" are present in df's columns.
-    One can also guarantee that "a" and "b" are not present
-    by switching to ``present = False``.
-
+    
     :param df: The name of the variable.
     :param column_names: A list of column names we want to check to see if
         present (or absent) in df.
@@ -92,67 +123,6 @@ def _extract_nodes(edges: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(all_users).rename(columns={0: "name"}).astype(str)
 
 
-def assert_nodes_edges_equal(nodes, edges, node_key):
-    check_column(nodes, [f"{node_key}"])
-
-    x1 = nodes[f"{node_key}"].astype(str)
-    x2 = _extract_nodes(edges)["name"]
-
-    assert set(x1) == set(x2)
-
-
-def assert_nodes_nodes_equal(G, nodes_df):
-    nb_nodes_g = len(list(G.vertices()))
-    nb_nodes_df = len(nodes_df)
-    assert nb_nodes_g == nb_nodes_df
-
-
-def assert_edges_edges_equal(G, edges_df):
-    nb_edges_g = len(list(G.edges()))
-    nb_edges_df = len(edges_df)
-    assert nb_edges_g == nb_edges_df
-
-
-def assert_index_reset(df):
-    assert all(df.index == range(len(df)))
-
-# def assert_gt_edgelist_equal(G: gt.Graph, edges2: pd.DataFrame):
-#     activate(G, "edges")
-#     edges1 = as_data_frame(G).loc[:, ["source", "target"]]\
-#                                 .assign(source = lambda x: x.source.map(int),
-#                                         target = lambda x: x.target.map(int))\
-#                                 .sort_values(["source", "target"])\
-#                                 .reset_index(drop=True)
-
-#     edges2 = make_index(edges2).loc[:, ["source", "target"]]\
-#                                 .assign(source = lambda x: x.source.map(int),
-#                                         target = lambda x: x.target.map(int))\
-#                                 .sort_values(["source", "target"])\
-#                                 .reset_index(drop=True)
-
-#   if edges1.equals(edges2) == False:
-#     raise ValueError("Not the same")
-
-
-def assert_edges_indexified(nodes, edges):
-    assert set(edges.source).union(set(edges.target)) == set(nodes.index)
-
-
-def assert_nodes_mergeable(nodes, edges, left_key, right_key):
-    assert all(edges[f"{left_key}"].isin(nodes[f"{right_key}"]))
-
-
-def _find_namecol(x, nodes):
-    if isinstance(x, gt.Graph):
-        namecol = set(list(x.vp.name))
-    elif guess_df_type(x) == "EdgeDataFrame":
-        namecol = set(x.source).union(set(x.target))
-    else:
-        raise ValueError("Unable to guess x")
-    return [c for c in nodes.columns
-            if set(nodes[f"{c}"]) == namecol][0]
-
-
 def _convert_types2gt(df, prop_name):
     check_column(df, [prop_name], present=True)
     prop_type = str(df[f"{prop_name}"].dtype)
@@ -169,6 +139,17 @@ def _convert_types2gt(df, prop_name):
         raise ValueError("Failed to guess type")
 
     return prop_type
+
+
+def _find_namecol(x, nodes):
+    if isinstance(x, gt.Graph):
+        namecol = set(list(x.vp.name))
+    elif guess_df_type(x) == "EdgeDataFrame":
+        namecol = set(x.source).union(set(x.target))
+    else:
+        raise ValueError("Unable to guess x")
+    return [c for c in nodes.columns
+            if set(nodes[f"{c}"]) == namecol][0]
 
 
 def guess_df_type(x: pd.DataFrame) -> str:
@@ -197,22 +178,9 @@ def reorder_columns(
     df: pd.DataFrame, column_order: Union[Iterable[str], pd.Index, Hashable]
 ) -> pd.DataFrame:
     """Reorder DataFrame columns by specifying desired order as list of col names.
-    Columns not specified retain their order and follow after specified cols.
-    Validates column_order to ensure columns are all present in DataFrame.
-    This method does not mutate the original DataFrame.
 
-    Functional usage syntax:
-    Given `DataFrame` with column names `col1`, `col2`, `col3`:
-    .. code-block:: python
-        df = reorder_columns(df, ['col2', 'col3'])
-    Method chaining syntax:
-    .. code-block:: python
-        import pandas as pd
-        import janitor
-        df = pd.DataFrame(...).reorder_columns(['col2', 'col3'])
-    The column order of `df` is now `col2`, `col3`, `col1`.
-    Internally, this function uses `DataFrame.reindex` with `copy=False`
-    to avoid unnecessary data duplication.
+
+
     :param df: `DataFrame` to reorder
     :param column_order: A list of column names or Pandas `Index`
         specifying their order in the returned `DataFrame`.
@@ -237,3 +205,4 @@ def reorder_columns(
         ),
         copy=False,
     )
+

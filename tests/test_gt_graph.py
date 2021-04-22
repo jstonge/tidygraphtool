@@ -1,20 +1,17 @@
-
-"""Tests for `tidygraphtool` package."""
-
 import pytest
 import pandas as pd
 
 from tidygraphtool.gt_graph import *
 
 
-def get_dat():
+def get_dat_simple():
     nodes = pd.DataFrame({"name": ["Bob", "Alice", "Joan", "Melvin"]})
     edges = pd.DataFrame({"source": ["Bob", "Bob", "Joan", "Alice"],
                           "target": ["Joan", "Melvin", "Alice", "Joan"]})
     return nodes, edges
 
 
-def get_dat2():
+def get_dat_edges_already_indexed():
     """
     Edges already indexed. Thus they do not correspond to nodes name.
 
@@ -28,20 +25,20 @@ def get_dat2():
 
 
 def test_gt_graph_dict_index():
-    nodes, edges = get_dat()
+    nodes, edges = get_dat_simple()
     g = gt_graph(nodes=nodes, edges=edges)
     nodes_g = as_data_frame(g)
-    activate(g, "edges")
+    g = activate(g, "edges")
     edges_g = as_data_frame(g)
     loc_bob_joan = list(nodes_g[nodes_g.label.isin(['Bob', 'Joan'])].index)
     assert list(edges_g.iloc[0, 0:2].astype(int)) == loc_bob_joan
 
 
 def test_gt_graph_data_frame_index():
-    _, edges = get_dat()
+    _, edges = get_dat_simple()
     g = as_gt_graph(edges)
     nodes_g = as_data_frame(g)
-    activate(g, "edges")
+    g = activate(g, "edges")
     edges_g = as_data_frame(g)
     loc_bob = list(nodes_g[nodes_g.label == 'Bob'].index)
     loc_joan = list(nodes_g[nodes_g.label == 'Joan'].index)
@@ -50,7 +47,7 @@ def test_gt_graph_data_frame_index():
 
 
 def test_gt_graph_dict_diff_index():
-    nodes, edges = get_dat2()
+    nodes, edges = get_dat_edges_already_indexed()
     g = gt_graph(nodes=nodes, edges=edges, node_key='id')
     assert set(edges.source).union(set(edges.target)) == set(nodes.id.astype(str))
 

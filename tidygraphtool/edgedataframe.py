@@ -1,5 +1,6 @@
-from pandas import DataFrame, Series
+"""Edge extension for dataframe"""
 
+from pandas import DataFrame, Series
 class EdgeDataFrame(DataFrame): 
     @property
     def _constructor(self): 

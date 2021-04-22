@@ -1,3 +1,5 @@
+"""Calculate metrics on graph"""
+
 import graph_tool.all as gt
 
 from .nodedataframe import NodeDataFrame

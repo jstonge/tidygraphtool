@@ -1,17 +1,17 @@
-from typing import Optional, Union
-import re
+"""Functions to augment graph with metdata in dataframe"""
 
+from typing import Optional, Union
 import graph_tool.all as gt
 import pandas as pd
+from pipey import Pipeable
 
 from .as_data_frame import as_data_frame
 from .edgedataframe import EdgeDataFrame, EdgeSeries
 from .nodedataframe import NodeDataFrame, NodeSeries
+from .context import expect_edges, expect_nodes
 from .utils import (
     assert_edges_edges_equal,
     guess_df_type,
-    check_column,
-    _find_namecol,
     check_null_values,
     _convert_types2gt,
     assert_nodes_nodes_equal,
@@ -19,7 +19,7 @@ from .utils import (
     assert_index_reset
 )
 
-
+@Pipeable(try_normal_call_first=True)
 def augment_prop(
     G: gt.Graph,
     x: pd.DataFrame,
@@ -51,7 +51,7 @@ def augment_prop(
 def _augment_prop_nodes(G: gt.Graph,
                         nodes: Union[NodeDataFrame, NodeSeries],
                         prop_name: Optional[str] = None) -> pd.DataFrame:
-
+    expect_nodes(G)
     nodes = NodeDataFrame(nodes)
 
     if prop_name is None:
@@ -84,9 +84,16 @@ def _reorder_nodes_like_g(G, prop, nodes):
     vprop_vals = list(G.vp[f"{prop}"])
     
     # Finding col with same vals than main vprop
-    x = [c for c in nodes.columns if set(nodes[f"{c}"]) == set(vprop_vals)][0]
+    x = [c for c in nodes.columns if set(nodes[f"{c}"]) == set(vprop_vals)]
 
-    nodes = nodes.set_index(nodes[f'{x}'])
+    if len(x) == 0:
+        try:
+            vprop_vals = list(G.iter_vertices())
+            x = [c for c in nodes.columns if set(nodes[f"{c}"]) == set(vprop_vals)]
+        except:
+            raise ValueError("No cols in nodes have same values than in G's main vprop")
+
+    nodes = nodes.set_index(nodes[f'{x[0]}'])
     nodes = nodes.loc[vprop_vals]
     nodes = nodes.reset_index(drop=True)
     return nodes
@@ -95,11 +102,16 @@ def _reorder_nodes_like_g(G, prop, nodes):
 def _augment_prop_edges(G: gt.Graph,
                         edges: Union[EdgeDataFrame, EdgeSeries],
                         prop_name: str) -> pd.DataFrame:
-
+    expect_edges(G)
     edges = EdgeDataFrame(edges)
 
     # check_column(edges, column_names = [prop_name])
     check_null_values(edges, [prop_name])
+
+    if 'source' not in edges.columns:
+        # G = activate(G, "edges")
+        edges_df = as_data_frame(G)
+        edges = pd.concat([edges_df, edges], axis=1)
 
     # Create internal properties maps
     prop_type = _convert_types2gt(edges, prop_name)
@@ -109,12 +121,9 @@ def _augment_prop_edges(G: gt.Graph,
     assert_edges_edges_equal(G, edges)
     assert_index_reset(edges)
 
-    if 'source' not in edges:
-        edges_df = as_data_frame(G)
-        edges = pd.concat([edges_df, edges])
-
     for i in range(len(edges)):
         # Augment graph with edge metadata
         e = G.edge(edges.source[i], edges.target[i])
         eprop[e] = edges.loc[i, f"{prop_name}"]
+
     return G

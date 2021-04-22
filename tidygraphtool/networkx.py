@@ -1,3 +1,5 @@
+"""Graphtool to Networkx graph"""
+
 from typing import Union, Optional
 
 import graph_tool.all as gt

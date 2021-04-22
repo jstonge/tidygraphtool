@@ -1,6 +1,8 @@
-"""Main module."""
+"""Main module to convert to get graph"""
+
 from functools import singledispatch
 from typing import Optional, Dict
+from pipey import Pipeable
 
 from .as_data_frame import as_data_frame
 from .augment import augment_prop
@@ -31,6 +33,21 @@ def gt_graph(
                               "target": ["Joan", "Melvin", "Alice", "Joan"]})
         gt_graph(nodes, edges)
 
+    NOTE
+    ====
+    Params are adapted directly from thomasp85's tidygraph api in R 
+
+    :param nodes: A `data.frame` containing information about the nodes in the graph.
+        If `edges.target` and/or `edges.from` are characters then they will be
+        matched to the column named according to `node_key` in nodes, if it exists.
+        If not, they will be matched to the first column.
+    :param edges:  A `data.frame` containing information about the edges in the
+        graph. The terminal nodes of each edge must either be encoded in a `target` and
+        `source` column, or in the two first columns, as integers. These integers refer to
+        `nodes` index.
+    :directed:  Should the constructed graph be directed (defaults to `TRUE`)
+    :node_key: The name of the column in `nodes` that character represented
+        `target` and `source` columns should be matched against. 
     :return: A `Graph_tool` object
     """
     return as_gt_graph({"nodes": nodes, "edges": edges}, 
@@ -46,26 +63,26 @@ def as_gt_graph(x):
 @as_gt_graph.register(pd.DataFrame)
 @as_gt_graph.register(EdgeDataFrame)
 def _data_frame(x, directed=True, node_key='name') -> gt.Graph:
-    """Convert networkx graph, and returns a graph-tool graph."""
+    """Convert dataframe, and returns a graph-tool graph."""
     if guess_df_type(x) == 'EdgeDataFrame':
         nodes = _extract_nodes(x)
         node_edge_df = {"nodes": nodes, "edges": x}
         nodes, edges = _as_graph_node_edge(node_edge_df, node_key=f'{node_key}')
 
         # Create Graph
-        g = gt.Graph(directed=directed)
+        g = gt.Graph(directed=directed) >> activate("nodes")
         g.add_edge_list(edges[["source", "target"]].to_numpy())
-        augment_prop(g, NodeDataFrame(nodes), prop_name=f"{node_key}")
+        g = augment_prop(g, NodeDataFrame(nodes), prop_name=f"{node_key}")
 
         # # Add edge metadata
+        g = activate(g, "edges")
         edgecols = edges.iloc[:, 2::].columns
         if len(edgecols) == 1:
             augment_prop(g, EdgeDataFrame(edges), prop_name=edgecols[0])
-        elif len(edgecols > 1):
+        elif len(edgecols) > 1:
             [augment_prop(g, EdgeDataFrame(edges), prop_name=c) for c in edgecols]
 
-        activate(g, "nodes")
-        return g
+        return activate(g, "nodes") # nodes by default
     else:
         raise ValueError("as_gt_graph for nodes not implemented yet")
 
@@ -86,8 +103,7 @@ def _dict(x, directed=True, node_key='name') -> gt.Graph:
         nodes, edges = _as_graph_node_edge(x, node_key=node_key)
 
         # Create Graph
-        g = gt.Graph(directed=directed)
-        activate(g, "nodes")
+        g = gt.Graph(directed=directed) >> activate("nodes")
         g.add_edge_list(edges[["source", "target"]].to_numpy())
 
         # Add node metadata
@@ -98,13 +114,14 @@ def _dict(x, directed=True, node_key='name') -> gt.Graph:
             [augment_prop(g, NodeDataFrame(nodes), prop_name=c) for c in nodecols]
 
         # Add edge metadata
+        g = activate(g, "edges")
         edgecols = edges.iloc[:, 2::].columns
         if len(edgecols) == 1:
             augment_prop(g,  x=EdgeDataFrame(edges), prop_name=edgecols[0])
         elif len(edgecols) > 1:
             [augment_prop(g, x=EdgeDataFrame(edges), prop_name=c) for c in edgecols]
 
-        return g
+        return activate(g, "nodes")
     else:
         raise ValueError("Other types not implemented yet")
 
@@ -113,16 +130,6 @@ def _as_graph_node_edge(x: Dict[pd.DataFrame, pd.DataFrame], node_key: str = 'na
     """Prep and check that list of nodes and edges is a proper graph_node_edge format"""
     nodes = [v[1] for v in x.items() if v[0] in ['nodes', 'vertices']][0]
     edges = [v[1] for v in x.items() if v[0] in ['edges', 'links']][0]
-
-    # We make sure that node_key is name
-    # if node_key != 'name':
-    #     if 'name' not in nodes.columns:
-    #         nodes = nodes.rename(columns={f"{node_key}": "name"})
-    #     else:
-    #         nodes = nodes.rename(columns={"name": "name_old", f"{node_key}": "name"})
-
-    # if "name" not in nodes.columns:
-    #     nodes = nodes.rename(columns={nodes.columns[0]: "name"})
 
     assert_nodes_edges_equal(nodes, edges, node_key), "Is `name` the node key?"
 
@@ -145,14 +152,9 @@ def _indexify_edges(
     Creates edges data frame with `source` and `target` labelled by index in
     nodes data frame. If "name" not in nodes data frame, we use the first col
     as name. If no node data frame, we create one out of edge dataframe
-    :param nodes: A `data frame` containing information about the nodes in the G
-    :param edges: A `data Frame` containing information about the nodes in the G.
+
     :return: edge dataframe 
     """
-    # if nodes is None:
-    #     nodes = _extract_nodes(edges)  # does not keep order. Does that matter?
-    # if "name" not in nodes.columns:
-    #     nodes = nodes.rename(columns={nodes.columns[0]: "name"})
 
     nodes = nodes.copy()
 
@@ -180,15 +182,15 @@ def _indexify_edges(
 
     return edges.drop(columns=[f"{node_key}_x", f"{node_key}_y"])[cols]
 
-
-def print_gt(G):
+@Pipeable(try_normal_call_first=True)
+def summary(G):
     if G.gp.active == 'nodes':
         print(as_data_frame(G))
-        activate(G, "edges")
+        G = activate(G, "edges")
         print(as_data_frame(G))
-        activate(G, "nodes")
+        G = activate(G, "nodes")
     elif G.gp.active == 'edges':
         print(as_data_frame(G))
-        activate(G, "nodes")
+        G = activate(G, "nodes")
         print(as_data_frame(G))
-        activate(G, "edges")
+        G = activate(G, "edges")
