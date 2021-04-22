@@ -63,7 +63,7 @@ def as_gt_graph(x):
 @as_gt_graph.register(pd.DataFrame)
 @as_gt_graph.register(EdgeDataFrame)
 def _data_frame(x, directed=True, node_key='name') -> gt.Graph:
-    """Convert networkx graph, and returns a graph-tool graph."""
+    """Convert dataframe, and returns a graph-tool graph."""
     if guess_df_type(x) == 'EdgeDataFrame':
         nodes = _extract_nodes(x)
         node_edge_df = {"nodes": nodes, "edges": x}
