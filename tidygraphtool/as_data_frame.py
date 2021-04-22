@@ -1,5 +1,7 @@
 """Graph to dataframe functions"""
 
+from tidygraphtool.nodedataframe import NodeDataFrame
+from tidygraphtool.edgedataframe import EdgeDataFrame
 from .context import expect_edges, expect_nodes
 import pandas as pd
 from pipey import Pipeable
@@ -14,29 +16,29 @@ def as_data_frame(G: gt.Graph) -> pd.DataFrame:
     else:
         raise ValueError("Nodes or edges must be active")
 
-def _edges2dataframe(G: gt.Graph) -> pd.DataFrame:
+def _edges2dataframe(G: gt.Graph) -> EdgeDataFrame:
     """Takes a Graph-tool graph object and returns edges data frame.
     
     Edges will always correspond to node index.
     """
     expect_edges(G)
-    edges_df = pd.DataFrame(list(G.edges()), columns=["source", "target"])\
+    edges_df = EdgeDataFrame(list(G.edges()), columns=["source", "target"])\
                  .assign(source = lambda x: x.source.astype(int),
                          target = lambda x: x.target.astype(int))
     
     edgecols = list(G.ep)
     if len(edgecols) >= 1:
         if len(edgecols) == 1:
-            edges_meta = pd.DataFrame({f"{edgecols[0]}": list(G.ep[f"{edgecols[0]}"])})
+            edges_meta = EdgeDataFrame({f"{edgecols[0]}": list(G.ep[f"{edgecols[0]}"])})
         elif len(edgecols) > 1:
-            edges_meta = pd.concat([pd.DataFrame({f"{edgecols[i]}": list(G.ep[f"{edgecols[i]}"])})
+            edges_meta = pd.concat([EdgeDataFrame({f"{edgecols[i]}": list(G.ep[f"{edgecols[i]}"])})
                                     for i in range(len(edgecols))], axis=1)
         return pd.concat([edges_df, edges_meta], axis=1)
     else:
         return edges_df
 
 
-def _nodes2dataframe(G: gt.Graph) -> pd.DataFrame:
+def _nodes2dataframe(G: gt.Graph) -> NodeDataFrame:
     """
     Takes a Graph-tool graph object and returns nodes data frame.
     """
@@ -44,7 +46,7 @@ def _nodes2dataframe(G: gt.Graph) -> pd.DataFrame:
     if len(G.vp) != 0:
         prop_dfs = []
         for prop in G.vp:
-            prop_dfs.append(pd.DataFrame({f"{prop}": list(G.vp[f"{prop}"])}))
+            prop_dfs.append(NodeDataFrame({f"{prop}": list(G.vp[f"{prop}"])}))
         prop_dfs = pd.concat(prop_dfs, axis=1)
 
         main_vprop = list(G.vp)[0]
@@ -68,4 +70,4 @@ def _nodes2dataframe(G: gt.Graph) -> pd.DataFrame:
             other_cols = list(prop_dfs.loc[:, prop_dfs.columns != f'{main_vprop}'])
             return prop_dfs.reorder_columns([f"{main_vprop}"] + other_cols)
     else:
-        return pd.DataFrame({"name":list(G.vertices())})
+        return NodeDataFrame({"name":list(G.vertices())})

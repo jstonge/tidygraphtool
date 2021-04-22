@@ -1,4 +1,3 @@
-
 """Helper functions to work with `state` object"""
 
 import re

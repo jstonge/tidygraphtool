@@ -63,3 +63,4 @@ def add_column(df: pd.DataFrame,
         df[column_name] = value
 
     return df
+

@@ -21,7 +21,7 @@ def get_dat_simple(with_node_meta=False):
 def test_filter_on_nodes():
   _, edges = get_dat_simple(with_node_meta=True)
   g = as_gt_graph(edges) 
-  df = as_data_frame(filter_on(g, 'label == "Melvin"'))
+  df = g >> filter_on('label == "Melvin"') >> as_data_frame()
   assert df.label.values[0] == 'Melvin'
 
 

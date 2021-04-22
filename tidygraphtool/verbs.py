@@ -23,35 +23,31 @@ from .node import node_largest_component
 def add_property(G, colname:str = None, *args, **kwargs) -> gt.Graph:
     """
     Creates a new column based on a function. 
-    Behave similar to mutate in R's dplyr.
 
-    USAGE
-    =====
-    `.. code-block:: python
-    add_property(g, "degree", centrality_degree) >> summary()
+    Functional usage syntax:
+
+    .. code-block:: python
+        
+        g = play_sbm()
+        add_property(g, "degree", centrality_degree)
+        summary(g)
     
-    Supplementary arguments to the function can be provided via the ``kwargs``
-    parameter::
-    u = (
-      g >>
+    Pipeable usage syntax with extra args:
+
+    .. code-block:: python
+
+      (play_sbm() >>
         activate("nodes") >>
-        add_property("degree_tot", centrality_degree, mode="total") >>
-        filter_on("degree_tot >= 2") 
-    )
+        add_property("degree_tot", centrality_degree, mode="total"))
 
 
-    :param args: implicitly, we expect the following params. 
-       :param G: A gt.Graph object you wish to add property.
-       :param column_name: A string that provide the name of the property.
-       :param func: A callable that calcuate the desired property.
+    :param G: A gt.Graph object you wish to add property.
+    :param column_name: A string that provide the name of the property.
+    :param args: implicitly, we expect a callable that calcuate the desired property.
     :param kwargs: named arguments that correspond to callable extra args.
     :returns: A gt.Graph object augmented with labelled property.
     """
-    # assert len(args) == 3
-
-    # G = args[0]
     G = G.copy()
-    # colname = args[1]
     f = args[0]
 
     check_args_order(G, colname, f)
@@ -64,18 +60,45 @@ def add_property(G, colname:str = None, *args, **kwargs) -> gt.Graph:
 
 
 #!TODO: Only works with group_hsbm, not generally, as we cannot pass colnames.
-@Pipeable(try_normal_call_first=True)
-def add_properties(G: gt.Graph, 
-                   func: Callable[[gt.Graph], pd.Series]) -> gt.Graph:
-    """
-    Creates a new column here based on a function. Behave like mutate in dplyr.
-    """
-    G = G.copy()
-    df = func
+# @Pipeable(try_normal_call_first=True)
+# def add_properties(G: gt.Graph, 
+#                    func: Callable[[gt.Graph], pd.Series]) -> gt.Graph:
+#     """Creates a new column here based on a function."""
+#     G = G.copy()
+#     df = func
 
-    [augment_prop(G, df, f"{c}") for c in df.columns]
+#     [augment_prop(G, df, f"{c}") for c in df.columns]
     
-    return G
+#     return G
+
+@Pipeable(try_normal_call_first=True)
+def arrange(G: gt.Graph, *args, **kwargs) -> pd.DataFrame:
+    """
+    Arrange the graph by the values of queried columns
+    
+    Pipeable usage syntax:
+
+    `.. code-block:: python
+    
+        (gt.collection.data["lesmis"] >> 
+            activate("nodes") >> 
+            add_property("degree", centrality_degree, mode="total") >>
+            add_property("bet", centrality_betweenness) >> 
+            arrange(["degree", "bet"], ascending=False))
+
+    :param G: A gt.Graph object you wish to add property.
+    :param args: the selected columns. 
+    :param kwargs: named arguments that correspond to callable extra args, e.g. ascending=False
+    :returns: A pd.DataFrame object arrange after the values of the selected column.
+    """
+    df_tmp = as_data_frame(G)
+    
+    if len(*args) > 1:
+        [check_column(df_tmp, val) for val in args]
+    else:
+        check_column(df_tmp, [*args])
+        
+    return df_tmp.sort_values(*args, **kwargs)
 
 
 @Pipeable(try_normal_call_first=True)
@@ -89,17 +112,26 @@ def filter_largest_component(G:gt.Graph) -> gt.Graph:
 
 @Pipeable(try_normal_call_first=True)
 def filter_on(G: gt.Graph, criteria: str) -> gt.Graph:
-    """Filter tidystyle on a particular criteria.
-    
-    edges = pd.DataFrame({"source":[1,4,3,2], "target":[2,3,2,1]})
-    g = as_gt_graph(edges)
-    filter_on(g, "source == 2")
     """
+    Filter tidystyle on a particular criteria.
+    
+    Pipeable usage syntax:
+
+    .. code-block:: python
+
+        (gt.collection.data["lesmis"] >> 
+           activate("nodes") >> 
+           add_property("degree", centrality_degree, mode="total") >>
+           filter_on("degree >= 10") >>
+           summary())
+
+    """
+    df = as_data_frame(G)
+    # _check_col_criteria(df, criteria)
+    df_tmp = df.query(criteria)
+
     if G.gp.active == "nodes":
         expect_nodes(G)
-        df = NodeDataFrame(as_data_frame(G))
-        #!TODO: check_column(nodes, ...)
-        df_tmp = df.query(criteria)
         df["bp"] = np.where(df.iloc[:,0].isin(df_tmp.iloc[:,0]), True, False)
         G = augment_prop(G, df, prop_name="bp")
         G = gt.GraphView(G, vfilt=G.vp.bp)
@@ -108,8 +140,6 @@ def filter_on(G: gt.Graph, criteria: str) -> gt.Graph:
         return G
     elif G.gp.active == "edges":
         expect_edges(G)
-        df = EdgeDataFrame(as_data_frame(G))
-        df_tmp = df.query(criteria)
         df["bp"] = np.where(df["source"].isin(df_tmp["source"]) & \
             df["target"].isin(df_tmp["target"]), True, False)
         G = augment_prop(G, df, prop_name="bp")
@@ -121,12 +151,19 @@ def filter_on(G: gt.Graph, criteria: str) -> gt.Graph:
         raise ValueError("Context must be activated to nodes or edges")
 
 
+def _check_col_criteria(df, criteria):
+    all_comp = re.findall("\w+", criteria)
+    cols = [_ for _ in all_comp if re.match("[a-zA-Z]", _)]
+    [check_column(df, [c]) for c in cols]
+
+
 @Pipeable(try_normal_call_first=True)
 def left_join(G: gt.Graph, 
               y: pd.DataFrame, 
               on: str = None
 ) -> gt.Graph:
-    """Left join dataframe on corresponding nodes or edges in graph.
+    """
+    Left join dataframe on corresponding nodes or edges in graph.
     
     IMPORTANT
     =========
@@ -144,19 +181,22 @@ def left_join(G: gt.Graph,
 
 @Pipeable(try_normal_call_first=True)
 def rename(G: gt.Graph, old_column_name: str, new_column_name: str) -> gt.Graph:
-    """Rename nodes or edges property.
+    """
+    Rename nodes or edges property.
     
-    USAGE
-    =====
+    Pipeable usage syntax:
+
+    .. code-block:: python
     
-    edges = pd.DataFrame({"source":[1,4,3,2], "target":[2,3,2,1]})
-    g = as_gt_graph(edges)
-    filter_on(g, "source == 2")
+        (gt.collection.data["lesmis"] >> 
+            activate("nodes") >> 
+            rename("label", "new_names") >> 
+            as_data_frame())
     
     """
     G = G.copy()
     
-    df = as_data_frame(G)
+    df = as_data_frame(G).loc[:, [old_column_name]]
     check_column(df, [old_column_name])
     df = df.rename(columns={old_column_name: new_column_name})
 
@@ -166,7 +206,7 @@ def rename(G: gt.Graph, old_column_name: str, new_column_name: str) -> gt.Graph:
         del G.vp[f"{old_column_name}"]
 
     augment_prop(G, df, new_column_name)
-    
+
     return G
 
 
