@@ -25,11 +25,11 @@ g = play_sbm(n_k=500)
 
 ## Installation
 
-Graph-tool is best installed in a fresh environment. 
+Because that graph-tool is mostly a c++ library, tidygraphtool is best installed from anaconda in a fresh environment. 
 
 ```bash
 git clone https://github.com/jstonge/tidygraphtool.git
-conda create --name graph_tool_env --file requirements.txt
+conda env create --file gt.yml
 ```
 
 ## INSPIRATION
