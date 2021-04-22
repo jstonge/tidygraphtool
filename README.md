@@ -1,7 +1,7 @@
 
 # tidygraphtool
 
-A tidy API for network manipulation with Graph-tool inspired by tidygraph. This is a experimental project. Use at your own risk.
+A tidy API for network manipulation with Graph-tool inspired by tidygraph. This is an experimental project of mine. Use at your own risk.
 
 ## Usage
 
