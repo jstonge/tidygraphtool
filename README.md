@@ -22,7 +22,7 @@ g = play_sbm(n_k=500)
 Installation is a bit weird because graph-tool cannot be pip-install. So what I did instead is to create pip package, then I provide a `conda env yaml` file from which to create a proper environment where graph-tool is installed. 
 
 ```bash
-pip install tidygraphtool
+pip install tidygraphtool &&
 conda env create --file gt.yml
 ```
 
