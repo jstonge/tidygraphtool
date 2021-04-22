@@ -21,14 +21,14 @@ g = play_sbm(n_k=500)
 
 ## Features
 
-  - tidy and functional API for graph wranling with the [graph-tool library](https://graph-tool.skewed.de/).
+  - tidy and functional API for graph wrangling with the [graph-tool library](https://graph-tool.skewed.de/).
 
 ## Installation
 
-Because that graph-tool is mostly a c++ library, tidygraphtool is best installed from anaconda in a fresh environment. 
+Installation is a bit weird because graph-tool cannot be pip-install. So what I did instead is to create pip package, then I provide a `conda env yaml` file from which to create a proper environment where graph-tool is installed. 
 
 ```bash
-git clone https://github.com/jstonge/tidygraphtool.git
+pip install tidygraphtool
 conda env create --file gt.yml
 ```
 
