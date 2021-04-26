@@ -1,0 +1,22 @@
+package:
+  name: tidygraphtool
+  version: 0.2
+
+source:
+  git_rev:
+  git_url: https://github.com/jstonge/tidygraphtool
+
+requirements:
+  build:
+    - python
+    - setuptools
+
+  run:
+    - python
+
+test:
+  imports:
+    -
+
+about:
+  home:
