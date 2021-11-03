@@ -19,25 +19,23 @@ g = play_sbm(n_k=500)
 ```
 ## Installation
 
-Installation is a bit weird because graph-tool cannot be pip-install. So what I did instead is to create pip package, then I provide a `conda env yaml` file from which to create a proper environment where graph-tool is installed. 
+Installation is a bit weird because graph-tool cannot be pip-install. The easiest way to install is to clone this repo, then from the root directory of the package: 
 
 ```bash
-pip install tidygraphtool &&
-conda env create --file gt.yml
+conda env create --file gt.yml &&
+conda activate gt &&
+pip install tidygraphtool
 ```
+The first and second lines create an environement with all the depenencies from `gt.yml`. The third line install tidygraphtool from `pypi` the package at large within the `gt` environment. 
 
 ## INSPIRATION
  - `graph_tool`: tidygraph is thin wrapper of graph_tool (https://graph-tool.skewed.de/).
- - `networkx`: we also draw inspiration from networkx.
  - `tidygraph`: the tidy API that cast graph analysis as two dataframe (https://github.com/thomasp85/tidygraph).
  - `dplyr`: verbs like API from which tidygraph draw inspiration .
- - `pyjanitor`: general organisation of python data wranling with pandas (https://github.com/ericmjl/pyjanitor).
- - `thinc`: functional API for deep learning (especially chaining and operator overloading; https://github.com/explosion/thinc).
 
 ## MODELS TO INTEGRATE
  - `hSBM_Topicmodel`: topic modeling based on graph_tool (https://github.com/martingerlach/hSBM_Topicmodel)
  - `bipartiteSBM`: bipartite community detection based on graph_tool (https://github.com/junipertcy/bipartiteSBM)
-
 
 
 ## PROTOYPE FUNCTIONAL INTERFACE
