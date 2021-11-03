@@ -22,8 +22,8 @@ g = play_sbm(n_k=500)
 Installation is a bit weird because graph-tool cannot be pip-install. The easiest way to install is to clone this repo, then from the root directory of the package: 
 
 ```bash
-conda env create --file gt.yml &&
-conda activate gt &&
+conda env create --file tidy_gt.yml &&
+conda activate tidy_gt &&
 pip install tidygraphtool
 ```
 The first and second lines create an environement with all the depenencies from `gt.yml`. The third line install tidygraphtool from `pypi` the package at large within the `gt` environment. 
