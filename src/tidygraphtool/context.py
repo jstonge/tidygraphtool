@@ -1,9 +1,9 @@
 """Active graph in particular states"""
 
 import graph_tool.all as gt
-from pipey import Pipeable
+from .pipes import Pipe
 
-@Pipeable(try_normal_call_first=True)
+@Pipe(try_normal_first=True)
 def activate(G: gt.Graph, what: str) -> gt.Graph:
   """Activate context of graph object to be in node or edges modes. 
   

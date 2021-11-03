@@ -4,10 +4,10 @@ from tidygraphtool.nodedataframe import NodeDataFrame
 from tidygraphtool.edgedataframe import EdgeDataFrame
 from .context import expect_edges, expect_nodes
 import pandas as pd
-from pipey import Pipeable
+from .pipes import Pipe
 import graph_tool.all as gt 
 
-@Pipeable(try_normal_call_first=True)
+@Pipe(try_normal_first=True)
 def as_data_frame(G: gt.Graph) -> pd.DataFrame:
     if G.gp.active == 'nodes':
         return _nodes2dataframe(G)

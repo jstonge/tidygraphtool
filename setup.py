@@ -9,7 +9,6 @@ setup(
     author='Jonathan St-Onge',
     author_email='jonathanstonge7@gmail.com',
     packages=['tidygraphtool'],
-    install_requires=['pipey'],
     version='0.2',
     package_dir={'': 'src'},
     license='MIT',

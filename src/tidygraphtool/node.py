@@ -2,7 +2,7 @@
 
 import graph_tool.all as gt 
 
-from pipey import Pipeable
+from .pipes import Pipe
 from .nodedataframe import NodeDataFrame, NodeSeries
 from .context import expect_nodes
 

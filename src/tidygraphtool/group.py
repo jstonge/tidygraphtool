@@ -173,6 +173,7 @@ def group_hsbm(G: gt.Graph,
     for i in range(100):
       ret = state.multiflip_mcmc_sweep(niter=10, beta=np.inf)
 
+  ent = state.entropy()
   group_all_levels = state_unnest(state)
   group_all_levels = pd.concat(
     [NodeDataFrame({f"{col}": [group_all_levels[f"{col}"]]}) 

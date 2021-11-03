@@ -5,7 +5,7 @@ import graph_tool.all as gt
 import pandas as pd
 import numpy as np
 
-from pipey import Pipeable
+from .pipes import Pipe
 
 from .augment import augment_prop
 from .as_data_frame import as_data_frame
@@ -17,7 +17,7 @@ from .node import node_largest_component
 
 #!TODO: Not working with function that takes as extra args EdgePropertyMap.
 #       The reason seems that we cannot properly unpack EdgePropertyMap value.
-@Pipeable(try_normal_call_first=True)
+@Pipe(try_normal_first=True)
 def add_property(G, colname:str = None, *args, **kwargs) -> gt.Graph:
     """
     Creates a new column based on a function. 
@@ -58,7 +58,7 @@ def add_property(G, colname:str = None, *args, **kwargs) -> gt.Graph:
 
 
 #!TODO: Only works with group_hsbm, not generally, as we cannot pass colnames.
-# @Pipeable(try_normal_call_first=True)
+# @Pipe(try_normal_first=True)
 # def add_properties(G: gt.Graph, 
 #                    func: Callable[[gt.Graph], pd.Series]) -> gt.Graph:
 #     """Creates a new column here based on a function."""
@@ -69,7 +69,7 @@ def add_property(G, colname:str = None, *args, **kwargs) -> gt.Graph:
     
 #     return G
 
-@Pipeable(try_normal_call_first=True)
+@Pipe(try_normal_first=True)
 def arrange(G: gt.Graph, *args, **kwargs) -> pd.DataFrame:
     """
     Arrange the graph by the values of queried columns
@@ -99,7 +99,7 @@ def arrange(G: gt.Graph, *args, **kwargs) -> pd.DataFrame:
     return df_tmp.sort_values(*args, **kwargs)
 
 
-@Pipeable(try_normal_call_first=True)
+@Pipe(try_normal_first=True)
 def filter_largest_component(G:gt.Graph) -> gt.Graph:
     """Extract largest component"""
     expect_nodes(G)
@@ -108,7 +108,7 @@ def filter_largest_component(G:gt.Graph) -> gt.Graph:
     return G
 
 
-@Pipeable(try_normal_call_first=True)
+@Pipe(try_normal_first=True)
 def filter_on(G: gt.Graph, criteria: str) -> gt.Graph:
     """
     Filter tidystyle on a particular criteria.
@@ -155,7 +155,7 @@ def _check_col_criteria(df, criteria):
     [check_column(df, [c]) for c in cols]
 
 
-@Pipeable(try_normal_call_first=True)
+@Pipe(try_normal_first=True)
 def left_join(G: gt.Graph, 
               y: pd.DataFrame, 
               on: str = None
@@ -177,7 +177,7 @@ def left_join(G: gt.Graph,
     return G
 
 
-@Pipeable(try_normal_call_first=True)
+@Pipe(try_normal_first=True)
 def rename(G: gt.Graph, old_column_name: str, new_column_name: str) -> gt.Graph:
     """
     Rename nodes or edges property.
@@ -208,7 +208,7 @@ def rename(G: gt.Graph, old_column_name: str, new_column_name: str) -> gt.Graph:
     return G
 
 
-@Pipeable(try_normal_call_first=True)
+@Pipe(try_normal_first=True)
 def simplify_edges(G:gt.Graph, 
                    remove_directed: bool = True,
                    remove_parallel: bool = True, 

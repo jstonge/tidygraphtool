@@ -4,11 +4,11 @@ from math import ceil
 
 import numpy as np
 import graph_tool.all as gt
-from pipey import Pipeable
+from .pipes import Pipe
 
 from .context import activate
 
-@Pipeable(try_normal_call_first=True)
+@Pipe(try_normal_first=True)
 def play_sbm(n_k: int = 100,
              k: int = 3,
              p_rs: float = 0.001,

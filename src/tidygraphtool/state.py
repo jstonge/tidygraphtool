@@ -4,7 +4,7 @@ import re
 import pandas as pd
 import numpy as np
 import graph_tool.all as gt
-from pipey import Pipeable
+from .pipes import Pipe
 
 
 def state_marginals(G: gt.Graph, state) -> pd.DataFrame:
@@ -120,7 +120,7 @@ def _merge_level_below(df_lvl_below, dat):
                     how = "left")
 
 
-@Pipeable(try_normal_call_first=True)
+@Pipe(try_normal_first=True)
 def state_unnest(state):
     """
     Unnest gt.BlockState object into a dataframe.

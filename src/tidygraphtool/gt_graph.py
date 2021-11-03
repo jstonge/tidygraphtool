@@ -2,7 +2,7 @@
 
 from functools import singledispatch
 from typing import Optional, Dict
-from pipey import Pipeable
+from .pipes import Pipe
 
 from .as_data_frame import as_data_frame
 from .augment import augment_prop
@@ -182,7 +182,7 @@ def _indexify_edges(
 
     return edges.drop(columns=[f"{node_key}_x", f"{node_key}_y"])[cols]
 
-@Pipeable(try_normal_call_first=True)
+@Pipe(try_normal_first=True)
 def summary(G):
     if G.gp.active == 'nodes':
         print(as_data_frame(G))

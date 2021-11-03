@@ -3,7 +3,7 @@
 from typing import Optional, Union
 import graph_tool.all as gt
 import pandas as pd
-from pipey import Pipeable
+from .pipes import Pipe
 
 from .as_data_frame import as_data_frame
 from .edgedataframe import EdgeDataFrame, EdgeSeries
@@ -19,7 +19,7 @@ from .utils import (
     assert_index_reset
 )
 
-@Pipeable(try_normal_call_first=True)
+@Pipe(try_normal_first=True)
 def augment_prop(
     G: gt.Graph,
     x: pd.DataFrame,
