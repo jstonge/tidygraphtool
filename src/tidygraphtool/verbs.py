@@ -69,34 +69,35 @@ def add_property(G, colname:str = None, *args, **kwargs) -> gt.Graph:
     
 #     return G
 
-@Pipe(try_normal_first=True)
-def arrange(G: gt.Graph, *args, **kwargs) -> pd.DataFrame:
-    """
-    Arrange the graph by the values of queried columns
+#!TODO: to fix. When a single column, *args > 1 because interpreted as characters. 
+# @Pipe(try_normal_first=True)
+# def arrange(G: gt.Graph, *args, **kwargs) -> pd.DataFrame:
+#     """
+#     Arrange the graph by the values of queried columns
     
-    Pipeable usage syntax:
+#     Pipeable usage syntax:
 
-    `.. code-block:: python
+#     `.. code-block:: python
     
-        (gt.collection.data["lesmis"] >> 
-            activate("nodes") >> 
-            add_property("degree", centrality_degree, mode="total") >>
-            add_property("bet", centrality_betweenness) >> 
-            arrange(["degree", "bet"], ascending=False))
+#         (gt.collection.data["lesmis"] >> 
+#             activate("nodes") >> 
+#             add_property("degree", centrality_degree, mode="total") >>
+#             add_property("bet", centrality_betweenness) >> 
+#             arrange(["degree", "bet"], ascending=False))
 
-    :param G: A gt.Graph object you wish to add property.
-    :param args: the selected columns. 
-    :param kwargs: named arguments that correspond to callable extra args, e.g. ascending=False
-    :returns: A pd.DataFrame object arrange after the values of the selected column.
-    """
-    df_tmp = as_data_frame(G)
+#     :param G: A gt.Graph object you wish to order the columns.
+#     :param args: the selected columns. 
+#     :param kwargs: named arguments that correspond to callable extra args, e.g. ascending=False
+#     :returns: A pd.DataFrame object arrange after the values of the selected column.
+#     """
+#     df_tmp = as_data_frame(G)
     
-    if len(*args) > 1:
-        [check_column(df_tmp, val) for val in args]
-    else:
-        check_column(df_tmp, [*args])
+#     if len(*args) > 1:
+#         [check_column(df_tmp, val) for val in args]
+#     else:
+#         check_column(df_tmp, [*args])
         
-    return df_tmp.sort_values(*args, **kwargs)
+#     return df_tmp.sort_values(*args, **kwargs)
 
 
 @Pipe(try_normal_first=True)
